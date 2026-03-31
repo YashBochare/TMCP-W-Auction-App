@@ -1,4 +1,4 @@
-import type { Player } from './types.js';
+import type { Player, TeamBidConstraints, BidProposal, ProposeBidPayload, AcceptBidPayload, BidAcceptedPayload } from './types.js';
 
 export type ClientRole = 'auctioneer' | 'captain' | 'viewer';
 
@@ -17,11 +17,12 @@ export interface AuctionStatePayload {
   currentHighestBid: number;
   currentHighestBidderTeamId: string | null;
   timerSeconds: number;
+  timerRunning: boolean;
   isPaused: boolean;
 }
 
 // Kept for backward compat with Story 1.4 stateSync — now uses AuctionStatePayload
-export type AuctionStateSyncPayload = AuctionStatePayload;
+export type AuctionStateSyncPayload = AuctionStatePayload & { constraints?: TeamBidConstraints[] };
 
 export interface SellPayload {
   teamId: string;
@@ -36,7 +37,16 @@ export interface ServerToClientEvents {
   'auction:playerPresented': (data: { player: Player }) => void;
   'auction:sold': (data: { playerName: string; teamName: string; soldPrice: number }) => void;
   'auction:unsold': (data: { playerName: string }) => void;
+  'auction:constraintsUpdated': (data: { constraints: TeamBidConstraints[] }) => void;
   'auction:error': (data: { message: string }) => void;
+  'auction:bidProposed': (data: { proposal: BidProposal }) => void;
+  'auction:bidProposalQueued': (data: { proposals: BidProposal[] }) => void;
+  'captain:bidStatus': (data: { status: 'proposed' | 'rejected' | 'error'; reason?: string; bidAmount: number }) => void;
+  'auction:bidAccepted': (data: BidAcceptedPayload) => void;
+  'captain:outbid': (data: { newHighestBid: number; newLeadingTeam: string }) => void;
+  'captain:highestBidder': (data: { bidAmount: number }) => void;
+  'auction:timerTick': (data: { secondsRemaining: number }) => void;
+  'auction:timerExpired': () => void;
 }
 
 export interface ClientToServerEvents {
@@ -48,4 +58,6 @@ export interface ClientToServerEvents {
   'auction:closeBidding': () => void;
   'auction:sell': (data: SellPayload) => void;
   'auction:markUnsold': () => void;
+  'captain:proposeBid': (data: ProposeBidPayload) => void;
+  'auctioneer:acceptBid': (data: AcceptBidPayload) => void;
 }

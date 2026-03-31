@@ -48,6 +48,7 @@ export class AuctionStateMachine {
   currentHighestBid = 0;
   currentHighestBidderTeamId: string | null = null;
   timerSeconds = 20;
+  lastAcceptedBid: { teamId: string; bidAmount: number; previousHighestBid: number; previousHighestBidderTeamId: string | null } | null = null;
   isPaused = false;
 
   private validateTransition(target: AuctionPhase): void {
@@ -101,6 +102,31 @@ export class AuctionStateMachine {
     return mutex.runExclusive(async () => {
       this.validateTransition('bidding_closed');
       this.phase = 'bidding_closed';
+      await this.syncToDb();
+    });
+  }
+
+  async acceptBid(teamId: string, bidAmount: number): Promise<void> {
+    return mutex.runExclusive(async () => {
+      if (this.phase !== 'bidding_open' && this.phase !== 'bidding_closed') {
+        throw new Error(`Cannot accept bid: auction is in ${this.phase} phase`);
+      }
+      if (!this.currentPlayer) {
+        throw new Error('Cannot accept bid: no current player');
+      }
+      if (bidAmount <= this.currentHighestBid) {
+        throw new Error(`Bid of ${bidAmount} must exceed current highest bid of ${this.currentHighestBid}`);
+      }
+
+      this.lastAcceptedBid = {
+        teamId,
+        bidAmount,
+        previousHighestBid: this.currentHighestBid,
+        previousHighestBidderTeamId: this.currentHighestBidderTeamId,
+      };
+
+      this.currentHighestBid = bidAmount;
+      this.currentHighestBidderTeamId = teamId;
       await this.syncToDb();
     });
   }
@@ -173,13 +199,14 @@ export class AuctionStateMachine {
     return { playerName };
   }
 
-  getState(): AuctionStatePayload {
+  getState(timerOverrides?: { timerSeconds: number; timerRunning: boolean }): AuctionStatePayload {
     return {
       phase: this.phase,
       currentPlayer: this.currentPlayer as any,
       currentHighestBid: this.currentHighestBid,
       currentHighestBidderTeamId: this.currentHighestBidderTeamId,
-      timerSeconds: this.timerSeconds,
+      timerSeconds: timerOverrides?.timerSeconds ?? this.timerSeconds,
+      timerRunning: timerOverrides?.timerRunning ?? false,
       isPaused: this.isPaused,
     };
   }

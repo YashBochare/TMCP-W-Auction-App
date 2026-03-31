@@ -18,6 +18,7 @@ import playersRoutes from './routes/players.routes.js';
 import auctionRoutes from './routes/auction.routes.js';
 import { setupSocketServer } from './socket/index.js';
 import { stateMachine } from './auction/stateMachine.js';
+import { auctionTimer } from './auction/auctionTimer.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -57,6 +58,30 @@ async function initAuctionState() {
       await getPrisma().auctionState.create({ data: {} });
     }
     await stateMachine.loadFromDb();
+
+    // Initialize timer
+    auctionTimer.setIo(io);
+    auctionTimer.setOnExpire(async () => {
+      try {
+        if (stateMachine.phase !== 'bidding_open') return;
+        await stateMachine.closeBidding();
+        if ((stateMachine.phase as string) === 'bidding_closed') {
+          io.emit('auction:stateChanged', stateMachine.getState({
+            timerSeconds: 0,
+            timerRunning: false,
+          }));
+          io.emit('auction:timerExpired');
+        }
+      } catch (error) {
+        console.error('Timer expiry error:', error);
+      }
+    });
+
+    // Crash recovery: resume timer if bidding was open
+    if (stateMachine.phase === 'bidding_open') {
+      auctionTimer.startFrom(stateMachine.timerSeconds);
+    }
+
     console.log(`[Auction] State loaded: phase=${stateMachine.phase}`);
   } catch (err) {
     console.error('[Auction] Failed to initialize state:', err);

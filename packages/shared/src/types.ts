@@ -67,6 +67,56 @@ export interface PlayerUploadResponse {
   errors: UploadValidationError[];
 }
 
+// Constraint Math types (Story 3.2)
+
+export interface TeamBidConstraints {
+  teamId: string;
+  teamName: string;
+  currentPurse: number;
+  currentSquadSize: number;
+  maxBid: number;
+  canBid: boolean;
+}
+
+export interface BidValidationResult {
+  valid: boolean;
+  reason?: string;
+}
+
+export interface AuctionConfig {
+  minBasePrice: number;
+  maxSquadSize: number;
+  startingPurse: number;
+}
+
+// Bid Proposal types (Story 3.3)
+
+export interface BidProposal {
+  id: string;
+  teamId: string;
+  teamName: string;
+  bidAmount: number;
+  timestamp: number;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
+export interface ProposeBidPayload {
+  bidAmount: number;
+}
+
+// Bid Acceptance types (Story 3.4)
+
+export interface AcceptBidPayload {
+  proposalId: string;
+}
+
+export interface BidAcceptedPayload {
+  teamId: string;
+  teamName: string;
+  bidAmount: number;
+  playerName: string;
+}
+
 // Player Roster types (Story 2.3)
 
 export interface UpdatePlayerRequest {
