@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PlayerStatus {
+  PENDING
+  SOLD
+  UNSOLD
+}
+
+enum BiddingStatus {
+  IDLE
+  OPEN
+  CLOSED
+}
+
+model Team {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  colorCode  String
+  purse      Int      @default(100000)
+  accessCode String   @unique
+  players    Player[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  auctionStatesAsHighestBidder AuctionState[] @relation("HighestBidder")
+}
+
+model Player {
+  id            String       @id @default(uuid())
+  name          String
+  photoUrl      String?
+  role          String
+  clubLevel     String
+  speakingSkill String
+  funTitle      String
+  basePrice     Int
+  status        PlayerStatus @default(PENDING)
+  soldPrice     Int?
+  teamId        String?
+  team          Team?        @relation(fields: [teamId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  auctionStatesAsCurrent AuctionState[] @relation("CurrentPlayer")
+
+  @@index([basePrice(sort: Desc)])
+  @@index([status])
+}
+
+model EventConfig {
+  id            String   @id @default(uuid())
+  startingPurse Int      @default(100000)
+  maxSquadSize  Int      @default(7)
+  minBasePrice  Int      @default(3000)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AuctionState {
+  id                     String        @id @default(uuid())
+  currentPlayerId        String?
+  currentPlayer          Player?       @relation("CurrentPlayer", fields: [currentPlayerId], references: [id])
+  currentHighestBid      Int           @default(0)
+  currentHighestBidderId String?
+  currentHighestBidder   Team?         @relation("HighestBidder", fields: [currentHighestBidderId], references: [id])
+  biddingStatus          BiddingStatus @default(IDLE)
+  timerSeconds           Int           @default(20)
+  isPaused               Boolean       @default(false)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+}

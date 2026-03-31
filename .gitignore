@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# BMAD
+_bmad/
+_bmad-output/
+
+# Claude
+.claude/
+
+# Prisma generated client (migrations ARE version-controlled)
+apps/api/src/generated/prisma/
