@@ -30,10 +30,14 @@ export function CaptainPage() {
 
       <PurseAndSquad purse={state.myPurse} squadSize={state.mySquadSize} />
 
+      {state.isPaused && (
+        <div className="captain-paused-banner">Auction Paused — Please wait</div>
+      )}
+
       <BiddingControls
         currentBid={state.currentHighestBid}
         maxBid={state.myMaxBid}
-        canBid={state.canBid}
+        canBid={state.canBid && !state.isPaused}
         phase={state.phase}
         isSending={state.isSending}
         onProposeBid={state.proposeBid}

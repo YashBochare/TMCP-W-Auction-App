@@ -60,6 +60,42 @@
 .player-queue__next-btn:hover:not(:disabled) { opacity: 0.85; }
 .player-queue__next-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.player-queue__recall-btn {
+  background: var(--accent-orange, #f59e0b);
+}
+
+.player-queue__recall-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.player-queue__recall-btn--yes {
+  background: var(--accent-orange, #f59e0b);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.player-queue__recall-btn--no {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
 .player-queue__list {
   display: flex;
   flex-direction: column;

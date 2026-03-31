@@ -96,8 +96,27 @@ export function useAuctioneerState(token?: string) {
     socket.on('auction:bidProposalQueued', handleBidProposalQueued);
     socket.on('auction:bidProposed', handleBidProposed);
     socket.on('auction:error', handleError);
+    const handleRosterRefreshed = () => {
+      if (!token) return;
+      fetch('/api/players', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.data && mountedRef.current) {
+            setExtras(s => ({ ...s, players: data.data }));
+          }
+        })
+        .catch(() => {
+          if (mountedRef.current) {
+            setExtras(s => ({ ...s, actionError: 'Failed to refresh player list' }));
+          }
+        });
+    };
+
     socket.on('auction:sold', handleSold);
     socket.on('auction:unsold', handleUnsold);
+    socket.on('auction:rosterRefreshed', handleRosterRefreshed);
 
     return () => {
       socket.off('auction:bidProposalQueued', handleBidProposalQueued);
@@ -105,6 +124,7 @@ export function useAuctioneerState(token?: string) {
       socket.off('auction:error', handleError);
       socket.off('auction:sold', handleSold);
       socket.off('auction:unsold', handleUnsold);
+      socket.off('auction:rosterRefreshed', handleRosterRefreshed);
     };
   }, [base.socket]);
 
@@ -205,6 +225,36 @@ export function useAuctioneerState(token?: string) {
       const socket = base.socket.current;
       if (!socket) return;
       withProcessing(() => socket.emit('auction:markUnsold'));
+    }, [base.socket, withProcessing]),
+
+    recallUnsold: useCallback(() => {
+      const socket = base.socket.current;
+      if (!socket) return;
+      withProcessing(() => socket.emit('auctioneer:recallUnsold'));
+    }, [base.socket, withProcessing]),
+
+    forceAcceptBid: useCallback((teamId: string, bidAmount: number) => {
+      const socket = base.socket.current;
+      if (!socket) return;
+      withProcessing(() => socket.emit('auctioneer:forceAcceptBid', { teamId, bidAmount }));
+    }, [base.socket, withProcessing]),
+
+    pause: useCallback(() => {
+      const socket = base.socket.current;
+      if (!socket) return;
+      withProcessing(() => socket.emit('auctioneer:pauseAuction'));
+    }, [base.socket, withProcessing]),
+
+    resume: useCallback(() => {
+      const socket = base.socket.current;
+      if (!socket) return;
+      withProcessing(() => socket.emit('auctioneer:resumeAuction'));
+    }, [base.socket, withProcessing]),
+
+    undoLastAction: useCallback(() => {
+      const socket = base.socket.current;
+      if (!socket) return;
+      withProcessing(() => socket.emit('auctioneer:undoLastAction'));
     }, [base.socket, withProcessing]),
 
     refreshPlayers: useCallback(() => {

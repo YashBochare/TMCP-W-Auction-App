@@ -99,6 +99,50 @@ router.post('/mark-unsold', async (_req: Request, res: Response) => {
   }
 });
 
+// Pause/Resume
+router.post('/pause', requireAuth, requireRole(UserRole.AUCTIONEER), async (_req: Request, res: Response) => {
+  try {
+    await stateMachine.pause();
+    auctionTimer.pause();
+    getIo().emit('auction:stateChanged', stateMachine.getState(getTimerState()));
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: { message: err.message } });
+  }
+});
+
+router.post('/resume', requireAuth, requireRole(UserRole.AUCTIONEER), async (_req: Request, res: Response) => {
+  try {
+    await stateMachine.resume();
+    auctionTimer.resume();
+    getIo().emit('auction:stateChanged', stateMachine.getState(getTimerState()));
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: { message: err.message } });
+  }
+});
+
+// Recall unsold players
+router.post('/recall-unsold', requireAuth, requireRole(UserRole.AUCTIONEER), async (_req: Request, res: Response) => {
+  if (stateMachine.phase !== 'idle') {
+    res.status(400).json({ success: false, error: { message: 'Cannot recall unsold players while auction is active' } });
+    return;
+  }
+  try {
+    const prisma = getPrisma();
+    const result = await prisma.player.updateMany({ where: { status: 'UNSOLD' }, data: { status: 'PENDING' } });
+    if (result.count === 0) {
+      res.status(404).json({ success: false, error: { message: 'No unsold players to recall' } });
+      return;
+    }
+    getIo().emit('auction:rosterRefreshed');
+    res.json({ success: true, data: { recalledCount: result.count } });
+  } catch (err: any) {
+    console.error('Recall unsold error:', err);
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+});
+
 // Constraint endpoints
 
 router.get('/constraints', async (_req: Request, res: Response) => {
@@ -161,6 +205,10 @@ router.post('/propose-bid', requireAuth, requireRole(UserRole.CAPTAIN), async (r
   }
   if (stateMachine.phase !== 'bidding_open') {
     res.status(400).json({ success: false, error: { message: 'Bidding is not currently open' } });
+    return;
+  }
+  if (stateMachine.isPaused) {
+    res.status(400).json({ success: false, error: { message: 'Auction is currently paused' } });
     return;
   }
 
@@ -237,6 +285,85 @@ router.post('/accept-bid', requireAuth, requireRole(UserRole.AUCTIONEER), async 
     }
 
     res.json({ success: true, data: { acceptedBid: { teamId: proposal.teamId, teamName: proposal.teamName, bidAmount: proposal.bidAmount } } });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: { message: err.message } });
+  }
+});
+
+// Force accept bid endpoint (Story 5.3)
+router.post('/force-accept-bid', requireAuth, requireRole(UserRole.AUCTIONEER), async (req: Request, res: Response) => {
+  const { teamId, bidAmount } = req.body;
+  if (!teamId || typeof teamId !== 'string') {
+    res.status(400).json({ success: false, error: { message: 'teamId is required' } });
+    return;
+  }
+  if (typeof bidAmount !== 'number' || !Number.isFinite(bidAmount) || bidAmount <= 0 || !Number.isInteger(bidAmount)) {
+    res.status(400).json({ success: false, error: { message: 'bidAmount must be a positive integer' } });
+    return;
+  }
+
+  const phase = stateMachine.phase;
+  if (phase !== 'bidding_open' && phase !== 'bidding_closed') {
+    res.status(400).json({ success: false, error: { message: 'Cannot force a bid outside of bidding phases' } });
+    return;
+  }
+
+  const team = await getPrisma().team.findUnique({ where: { id: teamId }, select: { name: true } });
+  if (!team) {
+    res.status(404).json({ success: false, error: { message: 'Team not found' } });
+    return;
+  }
+
+  // Validate constraints (bypass "must exceed current bid" check)
+  const validationResult = await validateTeamBid(teamId, bidAmount, bidAmount - 1);
+  if (!validationResult.valid) {
+    res.status(400).json({ success: false, error: { message: validationResult.reason } });
+    return;
+  }
+
+  try {
+    const previousHighestBidderTeamId = stateMachine.currentHighestBidderTeamId;
+
+    await stateMachine.acceptBid(teamId, bidAmount);
+    if (auctionTimer.isRunning()) { auctionTimer.reset(); }
+
+    bidQueue.clearLowerProposals(bidAmount);
+
+    const playerName = stateMachine.currentPlayer?.name || 'Unknown';
+    const io = getIo();
+    io.emit('auction:bidAccepted', { teamId, teamName: team.name, bidAmount, playerName });
+    io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
+    io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: bidQueue.getProposals() });
+
+    // Captain notifications
+    const { getClientsByRole } = await import('../socket/clientRegistry.js');
+    const allCaptains = getClientsByRole('captain');
+    const winningCaptain = allCaptains.find(c => c.teamId === teamId);
+    if (winningCaptain) io.to(winningCaptain.socketId).emit('captain:highestBidder', { bidAmount });
+    if (previousHighestBidderTeamId && previousHighestBidderTeamId !== teamId) {
+      const cap = allCaptains.find(c => c.teamId === previousHighestBidderTeamId);
+      if (cap) io.to(cap.socketId).emit('captain:outbid', { newHighestBid: bidAmount, newLeadingTeam: team.name });
+    }
+
+    res.json({ success: true, data: { acceptedBid: { teamId, teamName: team.name, bidAmount } } });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: { message: err.message } });
+  }
+});
+
+// Undo last action (Story 5.2)
+router.post('/undo', requireAuth, requireRole(UserRole.AUCTIONEER), async (_req: Request, res: Response) => {
+  try {
+    const { undoneType } = await stateMachine.undo();
+    bidQueue.clearQueue();
+    const io = getIo();
+    const constraints = await getAllTeamConstraints();
+    io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
+    if (undoneType === 'SOLD' || undoneType === 'UNSOLD') {
+      io.emit('auction:constraintsUpdated', { constraints });
+    }
+    io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: bidQueue.getProposals() });
+    res.json({ success: true, data: stateMachine.getState(getTimerState()) });
   } catch (err: any) {
     res.status(400).json({ success: false, error: { message: err.message } });
   }

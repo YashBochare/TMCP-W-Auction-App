@@ -1,3 +1,15 @@
+/* === Paused Banner === */
+.captain-paused-banner {
+  background: var(--accent-amber);
+  color: #000;
+  text-align: center;
+  padding: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
 /* === Captain Page Layout === */
 .captain-page {
   display: flex;

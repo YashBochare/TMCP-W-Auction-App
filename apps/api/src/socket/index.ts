@@ -166,6 +166,46 @@ export function setupSocketServer(httpServer: HttpServer) {
       }
     });
 
+    // === Pause/Resume ===
+
+    socket.on('auctioneer:pauseAuction', async () => {
+      if (!isAuctioneer()) { socket.emit('auction:error', { message: 'Only auctioneer can pause' }); return; }
+      try {
+        await stateMachine.pause();
+        auctionTimer.pause();
+        io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
+      } catch (err: any) {
+        socket.emit('auction:error', { message: err.message });
+      }
+    });
+
+    socket.on('auctioneer:resumeAuction', async () => {
+      if (!isAuctioneer()) { socket.emit('auction:error', { message: 'Only auctioneer can resume' }); return; }
+      try {
+        await stateMachine.resume();
+        auctionTimer.resume();
+        io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
+      } catch (err: any) {
+        socket.emit('auction:error', { message: err.message });
+      }
+    });
+
+    // === Recall unsold players ===
+
+    socket.on('auctioneer:recallUnsold', async () => {
+      if (!isAuctioneer()) { socket.emit('auction:error', { message: 'Only auctioneer can recall unsold players' }); return; }
+      if (stateMachine.phase !== 'idle') { socket.emit('auction:error', { message: 'Cannot recall unsold players while auction is active' }); return; }
+      try {
+        const prisma = getPrisma();
+        const result = await prisma.player.updateMany({ where: { status: 'UNSOLD' }, data: { status: 'PENDING' } });
+        if (result.count === 0) { socket.emit('auction:error', { message: 'No unsold players to recall' }); return; }
+        io.emit('auction:rosterRefreshed');
+      } catch (err: any) {
+        console.error('[WS] Recall unsold error:', err);
+        socket.emit('auction:error', { message: 'Failed to recall unsold players' });
+      }
+    });
+
     // === Auctioneer bid acceptance ===
 
     socket.on('auctioneer:acceptBid', async (data) => {
@@ -229,6 +269,71 @@ export function setupSocketServer(httpServer: HttpServer) {
       }
     });
 
+    // === Auctioneer force accept bid (Story 5.3) ===
+
+    socket.on('auctioneer:forceAcceptBid', async (data) => {
+      try {
+        if (!isAuctioneer()) {
+          socket.emit('auction:error', { message: 'Only the auctioneer can force-accept bids' });
+          return;
+        }
+
+        const phase = stateMachine.phase;
+        if (phase !== 'bidding_open' && phase !== 'bidding_closed') {
+          socket.emit('auction:error', { message: 'Cannot force a bid outside of bidding phases' });
+          return;
+        }
+
+        // Retrieve team name
+        const team = await getPrisma().team.findUnique({ where: { id: data.teamId }, select: { name: true } });
+        if (!team) {
+          socket.emit('auction:error', { message: 'Team not found' });
+          return;
+        }
+
+        // Validate via constraint engine (bypass the "must exceed current bid" check)
+        const validationResult = await validateTeamBid(data.teamId, data.bidAmount, data.bidAmount - 1);
+        if (!validationResult.valid) {
+          socket.emit('auction:error', { message: validationResult.reason || 'Bid validation failed' });
+          return;
+        }
+
+        const previousHighestBidderTeamId = stateMachine.currentHighestBidderTeamId;
+
+        await stateMachine.acceptBid(data.teamId, data.bidAmount);
+        if (auctionTimer.isRunning()) { auctionTimer.reset(); }
+
+        // Clear lower proposals from the queue
+        bidQueue.clearLowerProposals(data.bidAmount);
+
+        // Broadcast to ALL clients
+        const playerName = stateMachine.currentPlayer?.name || 'Unknown';
+        io.emit('auction:bidAccepted', { teamId: data.teamId, teamName: team.name, bidAmount: data.bidAmount, playerName });
+        io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
+
+        // Update auctioneer's queue
+        io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: bidQueue.getProposals() });
+
+        // Notify winning captain
+        const allCaptains = getClientsByRole('captain');
+        const winningCaptain = allCaptains.find(c => c.teamId === data.teamId);
+        if (winningCaptain) {
+          io.to(winningCaptain.socketId).emit('captain:highestBidder', { bidAmount: data.bidAmount });
+        }
+
+        // Notify previous highest bidder
+        if (previousHighestBidderTeamId && previousHighestBidderTeamId !== data.teamId) {
+          const outbidCaptain = allCaptains.find(c => c.teamId === previousHighestBidderTeamId);
+          if (outbidCaptain) {
+            io.to(outbidCaptain.socketId).emit('captain:outbid', { newHighestBid: data.bidAmount, newLeadingTeam: team.name });
+          }
+        }
+      } catch (err: any) {
+        console.error('[WS] Force accept bid error:', err);
+        socket.emit('auction:error', { message: err.message || 'Failed to force-accept bid' });
+      }
+    });
+
     // === Captain bid proposal ===
 
     socket.on('captain:proposeBid', async (data) => {
@@ -240,6 +345,10 @@ export function setupSocketServer(httpServer: HttpServer) {
         }
         if (stateMachine.phase !== 'bidding_open') {
           socket.emit('captain:bidStatus', { status: 'rejected', reason: 'Bidding is not currently open', bidAmount: data.bidAmount });
+          return;
+        }
+        if (stateMachine.isPaused) {
+          socket.emit('captain:bidStatus', { status: 'rejected', reason: 'Auction is currently paused', bidAmount: data.bidAmount });
           return;
         }
         if (typeof data.bidAmount !== 'number' || !Number.isFinite(data.bidAmount) || data.bidAmount <= 0 || !Number.isInteger(data.bidAmount)) {
@@ -279,6 +388,24 @@ export function setupSocketServer(httpServer: HttpServer) {
       } catch (err) {
         console.error('[WS] Bid proposal error:', err);
         socket.emit('captain:bidStatus', { status: 'error', reason: 'Server error processing bid', bidAmount: data.bidAmount });
+      }
+    });
+
+    // === Undo last action (Story 5.2) ===
+
+    socket.on('auctioneer:undoLastAction', async () => {
+      if (!isAuctioneer()) { socket.emit('auction:error', { message: 'Only auctioneer can undo actions' }); return; }
+      try {
+        const { undoneType } = await stateMachine.undo();
+        bidQueue.clearQueue();
+        const constraints = await getAllTeamConstraints();
+        io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
+        if (undoneType === 'SOLD' || undoneType === 'UNSOLD') {
+          io.emit('auction:constraintsUpdated', { constraints });
+        }
+        io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: bidQueue.getProposals() });
+      } catch (err: any) {
+        socket.emit('auction:error', { message: err.message });
       }
     });
 

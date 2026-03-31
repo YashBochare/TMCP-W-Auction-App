@@ -1,4 +1,4 @@
-import type { Player, TeamBidConstraints, BidProposal, ProposeBidPayload, AcceptBidPayload, BidAcceptedPayload } from './types.js';
+import type { Player, TeamBidConstraints, BidProposal, ProposeBidPayload, AcceptBidPayload, BidAcceptedPayload, ForceAcceptBidPayload } from './types.js';
 
 export type ClientRole = 'auctioneer' | 'captain' | 'viewer';
 
@@ -19,6 +19,7 @@ export interface AuctionStatePayload {
   timerSeconds: number;
   timerRunning: boolean;
   isPaused: boolean;
+  hasUndoHistory: boolean;
 }
 
 // Kept for backward compat with Story 1.4 stateSync — now uses AuctionStatePayload
@@ -47,6 +48,7 @@ export interface ServerToClientEvents {
   'captain:highestBidder': (data: { bidAmount: number }) => void;
   'auction:timerTick': (data: { secondsRemaining: number }) => void;
   'auction:timerExpired': () => void;
+  'auction:rosterRefreshed': () => void;
 }
 
 export interface ClientToServerEvents {
@@ -60,4 +62,9 @@ export interface ClientToServerEvents {
   'auction:markUnsold': () => void;
   'captain:proposeBid': (data: ProposeBidPayload) => void;
   'auctioneer:acceptBid': (data: AcceptBidPayload) => void;
+  'auctioneer:pauseAuction': () => void;
+  'auctioneer:resumeAuction': () => void;
+  'auctioneer:undoLastAction': () => void;
+  'auctioneer:recallUnsold': () => void;
+  'auctioneer:forceAcceptBid': (data: ForceAcceptBidPayload) => void;
 }

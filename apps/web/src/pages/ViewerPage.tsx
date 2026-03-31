@@ -42,6 +42,14 @@ export function ViewerPage() {
         />
       </div>
 
+      {state.isPaused && (
+        <div className="overlay overlay--paused">
+          <div className="overlay__content">
+            <div className="overlay__title overlay__title--paused">AUCTION PAUSED</div>
+          </div>
+        </div>
+      )}
+
       {state.soldOverlay && (
         <SoldOverlay
           playerName={state.soldOverlay.playerName}

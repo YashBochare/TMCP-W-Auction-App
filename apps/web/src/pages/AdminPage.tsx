@@ -7,6 +7,7 @@ import { BidProposalQueue } from '../components/auctioneer/BidProposalQueue';
 import { AuctionControls } from '../components/auctioneer/AuctionControls';
 import { PlayerQueue } from '../components/auctioneer/PlayerQueue';
 import { TeamConstraintsPanel } from '../components/auctioneer/TeamConstraintsPanel';
+import { ManualBidPanel } from '../components/auctioneer/ManualBidPanel';
 import './AdminPage.css';
 
 export function AdminPage() {
@@ -60,8 +61,17 @@ export function AdminPage() {
           <AuctionControls
             phase={state.phase}
             currentHighestBid={state.currentHighestBid}
+            isPaused={state.isPaused}
+            hasUndoHistory={state.hasUndoHistory}
             isProcessing={state.isProcessing}
             actions={state.actions}
+          />
+          <ManualBidPanel
+            teams={state.teams}
+            currentHighestBid={state.currentHighestBid}
+            phase={state.phase}
+            isProcessing={state.isProcessing}
+            onForceAcceptBid={state.actions.forceAcceptBid}
           />
           <TeamConstraintsPanel
             teams={state.teams}
@@ -86,6 +96,7 @@ export function AdminPage() {
             phase={state.phase}
             isProcessing={state.isProcessing}
             onNextPlayer={state.actions.nextPlayer}
+            onRecallUnsold={state.actions.recallUnsold}
           />
         </div>
       </div>

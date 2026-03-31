@@ -14,6 +14,7 @@ interface AuctionState {
   timerRunning: boolean;
   timerExpired: boolean;
   isPaused: boolean;
+  hasUndoHistory: boolean;
   teams: TeamBidConstraints[];
   soldOverlay: { playerName: string; teamName: string; soldPrice: number } | null;
   unsoldOverlay: { playerName: string } | null;
@@ -31,6 +32,7 @@ export function useAuctionState(role: 'viewer' | 'captain' | 'auctioneer' = 'vie
     timerRunning: false,
     timerExpired: false,
     isPaused: false,
+    hasUndoHistory: false,
     teams: [],
     soldOverlay: null,
     unsoldOverlay: null,
@@ -62,6 +64,7 @@ export function useAuctionState(role: 'viewer' | 'captain' | 'auctioneer' = 'vie
         timerSeconds: data.timerSeconds,
         timerRunning: data.timerRunning,
         isPaused: data.isPaused,
+        hasUndoHistory: data.hasUndoHistory ?? false,
         timerExpired: false,
         teams: data.constraints ?? s.teams,
         currentHighestBidderTeamName: deriveTeamName(data.currentHighestBidderTeamId, data.constraints ?? s.teams),
@@ -79,6 +82,7 @@ export function useAuctionState(role: 'viewer' | 'captain' | 'auctioneer' = 'vie
         timerSeconds: data.timerSeconds,
         timerRunning: data.timerRunning,
         isPaused: data.isPaused,
+        hasUndoHistory: data.hasUndoHistory ?? false,
         timerExpired: false,
         currentHighestBidderTeamName: deriveTeamName(data.currentHighestBidderTeamId, s.teams),
       }));

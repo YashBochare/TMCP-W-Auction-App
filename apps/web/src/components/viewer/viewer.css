@@ -313,6 +313,15 @@
   background: rgba(0, 0, 0, 0.8);
 }
 
+.overlay--paused {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.overlay__title--paused {
+  color: var(--accent-amber);
+}
+
 .overlay__content {
   text-align: center;
   animation: scaleIn var(--transition-slow) ease-out;

@@ -117,6 +117,13 @@ export interface BidAcceptedPayload {
   playerName: string;
 }
 
+// Force Accept Bid types (Story 5.3)
+
+export interface ForceAcceptBidPayload {
+  teamId: string;
+  bidAmount: number;
+}
+
 // Player Roster types (Story 2.3)
 
 export interface UpdatePlayerRequest {

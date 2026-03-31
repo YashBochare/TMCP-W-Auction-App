@@ -26,6 +26,13 @@ function phaseToBiddingStatus(phase: AuctionPhase): 'IDLE' | 'OPEN' | 'CLOSED' {
   }
 }
 
+// Undo snapshot types (Story 5.2)
+export type UndoSnapshot =
+  | { type: 'SOLD'; playerId: string; teamId: string; amount: number; previousPhase: AuctionPhase; previousBid: number; previousTeamId: string | null }
+  | { type: 'UNSOLD'; playerId: string; previousPhase: AuctionPhase; previousBid: number; previousTeamId: string | null }
+  | { type: 'BID_ACCEPTED'; previousBid: number; previousTeamId: string | null }
+  | null;
+
 interface PlayerRecord {
   id: string;
   name: string;
@@ -50,6 +57,7 @@ export class AuctionStateMachine {
   timerSeconds = 20;
   lastAcceptedBid: { teamId: string; bidAmount: number; previousHighestBid: number; previousHighestBidderTeamId: string | null } | null = null;
   isPaused = false;
+  private lastAction: UndoSnapshot = null;
 
   private validateTransition(target: AuctionPhase): void {
     if (!VALID_TRANSITIONS[this.phase].includes(target)) {
@@ -84,6 +92,8 @@ export class AuctionStateMachine {
     this.currentHighestBidderTeamId = null;
     this.phase = 'player_presented';
     this.timerSeconds = 20;
+    this.isPaused = false;
+    this.lastAction = null;
 
     await this.syncToDb();
     return player;
@@ -102,6 +112,7 @@ export class AuctionStateMachine {
     return mutex.runExclusive(async () => {
       this.validateTransition('bidding_closed');
       this.phase = 'bidding_closed';
+      this.isPaused = false;
       await this.syncToDb();
     });
   }
@@ -125,8 +136,33 @@ export class AuctionStateMachine {
         previousHighestBidderTeamId: this.currentHighestBidderTeamId,
       };
 
+      this.lastAction = { type: 'BID_ACCEPTED', previousBid: this.currentHighestBid, previousTeamId: this.currentHighestBidderTeamId };
+
       this.currentHighestBid = bidAmount;
       this.currentHighestBidderTeamId = teamId;
+      await this.syncToDb();
+    });
+  }
+
+  async pause(): Promise<void> {
+    return mutex.runExclusive(async () => {
+      if (this.phase !== 'bidding_open') {
+        throw new Error('Cannot pause: bidding is not open');
+      }
+      if (this.isPaused) {
+        throw new Error('Auction is already paused');
+      }
+      this.isPaused = true;
+      await this.syncToDb();
+    });
+  }
+
+  async resume(): Promise<void> {
+    return mutex.runExclusive(async () => {
+      if (!this.isPaused) {
+        throw new Error('Auction is not paused');
+      }
+      this.isPaused = false;
       await this.syncToDb();
     });
   }
@@ -141,6 +177,17 @@ export class AuctionStateMachine {
     }
     if (!this.currentPlayer) throw new Error('Cannot sell: no current player');
     if (this.currentHighestBid <= 0) throw new Error('Cannot sell: no accepted bid');
+
+    // Snapshot BEFORE mutation for undo
+    this.lastAction = {
+      type: 'SOLD',
+      playerId: this.currentPlayer.id,
+      teamId,
+      amount: this.currentHighestBid,
+      previousPhase: this.phase,
+      previousBid: this.currentHighestBid,
+      previousTeamId: this.currentHighestBidderTeamId,
+    };
 
     const playerName = this.currentPlayer.name;
     const soldPrice = this.currentHighestBid;
@@ -168,6 +215,7 @@ export class AuctionStateMachine {
     this.currentHighestBid = 0;
     this.currentHighestBidderTeamId = null;
     this.phase = 'idle';
+    this.isPaused = false;
 
     await this.syncToDb();
     return { playerName, teamName: result.teamName, soldPrice };
@@ -183,6 +231,15 @@ export class AuctionStateMachine {
       throw new Error('Cannot mark unsold: bidding must be closed or player just presented');
     }
 
+    // Snapshot BEFORE mutation for undo
+    this.lastAction = {
+      type: 'UNSOLD',
+      playerId: this.currentPlayer.id,
+      previousPhase: this.phase,
+      previousBid: this.currentHighestBid,
+      previousTeamId: this.currentHighestBidderTeamId,
+    };
+
     const playerName = this.currentPlayer.name;
 
     await getPrisma().player.update({
@@ -194,9 +251,63 @@ export class AuctionStateMachine {
     this.currentHighestBid = 0;
     this.currentHighestBidderTeamId = null;
     this.phase = 'idle';
+    this.isPaused = false;
 
     await this.syncToDb();
     return { playerName };
+  }
+
+  // Story 5.2: Undo last action
+  async undo(): Promise<{ undoneType: string }> {
+    return mutex.runExclusive(async () => this._undo());
+  }
+
+  private async _undo(): Promise<{ undoneType: string }> {
+    if (!this.lastAction) throw new Error('No recent action to undo');
+
+    const action = this.lastAction;
+
+    if (action.type === 'SOLD') {
+      await getPrisma().$transaction(async (tx) => {
+        await tx.player.update({
+          where: { id: action.playerId },
+          data: { status: 'PENDING', teamId: null, soldPrice: null },
+        });
+        await tx.team.update({
+          where: { id: action.teamId },
+          data: { purse: { increment: action.amount } },
+        });
+      });
+
+      const player = await getPrisma().player.findUnique({ where: { id: action.playerId } });
+      if (!player) throw new Error('Undo failed: player no longer exists');
+      this.currentPlayer = player;
+      this.currentHighestBid = action.previousBid;
+      this.currentHighestBidderTeamId = action.previousTeamId;
+      this.phase = action.previousPhase;
+      await this.syncToDb();
+    } else if (action.type === 'UNSOLD') {
+      await getPrisma().player.update({
+        where: { id: action.playerId },
+        data: { status: 'PENDING' },
+      });
+
+      const player = await getPrisma().player.findUnique({ where: { id: action.playerId } });
+      if (!player) throw new Error('Undo failed: player no longer exists');
+      this.currentPlayer = player;
+      this.currentHighestBid = action.previousBid;
+      this.currentHighestBidderTeamId = action.previousTeamId;
+      this.phase = action.previousPhase;
+      await this.syncToDb();
+    } else if (action.type === 'BID_ACCEPTED') {
+      this.currentHighestBid = action.previousBid;
+      this.currentHighestBidderTeamId = action.previousTeamId;
+      await this.syncToDb();
+    }
+
+    const undoneType = action.type;
+    this.lastAction = null;
+    return { undoneType };
   }
 
   getState(timerOverrides?: { timerSeconds: number; timerRunning: boolean }): AuctionStatePayload {
@@ -208,6 +319,7 @@ export class AuctionStateMachine {
       timerSeconds: timerOverrides?.timerSeconds ?? this.timerSeconds,
       timerRunning: timerOverrides?.timerRunning ?? false,
       isPaused: this.isPaused,
+      hasUndoHistory: this.lastAction !== null,
     };
   }
 

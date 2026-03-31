@@ -1,0 +1,99 @@
+.manual-bid-panel {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.manual-bid-panel__toggle {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+}
+
+.manual-bid-panel__toggle:hover {
+  color: var(--text-primary);
+}
+
+.manual-bid-panel__body {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.manual-bid-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.manual-bid-panel__label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.manual-bid-panel__select,
+.manual-bid-panel__input {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 8px 10px;
+}
+
+.manual-bid-panel__select:focus,
+.manual-bid-panel__input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.manual-bid-panel__input::-webkit-inner-spin-button,
+.manual-bid-panel__input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.manual-bid-panel__input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.manual-bid-panel__error {
+  font-size: 0.8rem;
+  color: var(--accent-red);
+  padding: 0 2px;
+}
+
+.manual-bid-panel__submit {
+  background: var(--accent-amber);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.manual-bid-panel__submit:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.manual-bid-panel__submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -8,10 +8,12 @@ interface PlayerQueueProps {
   phase: AuctionPhase;
   isProcessing: boolean;
   onNextPlayer: () => void;
+  onRecallUnsold?: () => void;
 }
 
-export function PlayerQueue({ players, currentPlayerId, phase, isProcessing, onNextPlayer }: PlayerQueueProps) {
+export function PlayerQueue({ players, currentPlayerId, phase, isProcessing, onNextPlayer, onRecallUnsold }: PlayerQueueProps) {
   const [filter, setFilter] = useState('');
+  const [showRecallConfirm, setShowRecallConfirm] = useState(false);
 
   const pendingCount = players.filter(p => p.status === 'PENDING').length;
   const soldCount = players.filter(p => p.status === 'SOLD').length;
@@ -50,6 +52,35 @@ export function PlayerQueue({ players, currentPlayerId, phase, isProcessing, onN
         >
           {isProcessing ? 'Loading...' : 'Next Player'}
         </button>
+      )}
+
+      {phase === 'idle' && pendingCount === 0 && unsoldCount > 0 && onRecallUnsold && (
+        showRecallConfirm ? (
+          <div className="player-queue__recall-confirm">
+            <span>Recall {unsoldCount} unsold player{unsoldCount !== 1 ? 's' : ''}?</span>
+            <button
+              className="player-queue__recall-btn player-queue__recall-btn--yes"
+              onClick={() => { onRecallUnsold(); setShowRecallConfirm(false); }}
+              disabled={isProcessing}
+            >
+              Yes, Recall
+            </button>
+            <button
+              className="player-queue__recall-btn player-queue__recall-btn--no"
+              onClick={() => setShowRecallConfirm(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            className="player-queue__next-btn player-queue__recall-btn"
+            onClick={() => setShowRecallConfirm(true)}
+            disabled={isProcessing}
+          >
+            Recall Unsold ({unsoldCount})
+          </button>
+        )
       )}
 
       <div className="player-queue__list">

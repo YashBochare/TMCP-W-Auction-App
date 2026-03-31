@@ -62,6 +62,41 @@
   padding: 10px 20px;
 }
 
+.control-btn.pause {
+  background: var(--accent-amber);
+  color: #000;
+  font-size: 0.9rem;
+  padding: 10px 20px;
+}
+
+.control-btn.resume {
+  background: var(--accent-green);
+  color: #000;
+  font-size: 1.05rem;
+  padding: 14px 28px;
+  min-height: 52px;
+}
+
+.auction-controls__paused-banner {
+  background: var(--accent-amber);
+  color: #000;
+  text-align: center;
+  padding: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+}
+
+.control-btn.undo {
+  background: transparent;
+  border: 1px solid var(--text-secondary);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  margin-top: 4px;
+}
+
 .control-btn.confirming {
   animation: pulse 0.5s ease-in-out infinite alternate;
   background: var(--accent-amber);
