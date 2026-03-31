@@ -1,0 +1,108 @@
+.bid-queue {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bid-queue__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bid-queue__header h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bid-queue__count {
+  background: var(--accent-blue);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.bid-queue__empty {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.bid-queue__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bid-queue__row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
+  animation: slideUp var(--transition-fast);
+}
+
+.bid-queue__row--highest {
+  border-left-color: var(--accent-gold);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.bid-queue__team {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bid-queue__amount {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-accent);
+  white-space: nowrap;
+}
+
+.bid-queue__time {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.bid-queue__accept {
+  background: var(--accent-green);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-width: 72px;
+  transition: opacity var(--transition-fast);
+}
+
+.bid-queue__accept:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.bid-queue__accept:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -1,0 +1,144 @@
+.admin-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-page__grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.admin-page__left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.admin-page__center {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.admin-page__right {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.admin-page__right > .player-queue {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Logout button */
+.admin-page__logout {
+  position: fixed;
+  top: 8px;
+  right: 16px;
+  z-index: 200;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-family: var(--font-display);
+  transition: color var(--transition-fast);
+}
+
+.admin-page__logout:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Overlays */
+.admin-page__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn var(--transition-fast);
+  pointer-events: none;
+}
+
+.admin-page__overlay--sold {
+  background: rgba(52, 211, 153, 0.15);
+}
+
+.admin-page__overlay--unsold {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.admin-page__overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  padding: 32px 48px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  animation: scaleIn var(--transition-normal);
+}
+
+.admin-page__overlay-label {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+}
+
+.admin-page__overlay--sold .admin-page__overlay-label {
+  color: var(--accent-green);
+}
+
+.admin-page__overlay--unsold .admin-page__overlay-label {
+  color: var(--accent-red);
+}
+
+.admin-page__overlay-player {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-page__overlay-detail {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+/* Min-width warning */
+.admin-page__mobile-warning {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .admin-page__grid {
+    display: none;
+  }
+
+  .admin-page__mobile-warning {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    padding: 32px;
+    text-align: center;
+  }
+}

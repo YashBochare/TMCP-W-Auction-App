@@ -1,0 +1,66 @@
+.constraints-panel {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.constraints-panel__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.constraints-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.constraints-panel__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
+  font-size: 0.8rem;
+}
+
+.constraints-panel__row--leading {
+  border-left-color: var(--accent-gold);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.constraints-panel__row--disabled {
+  opacity: 0.4;
+}
+
+.constraints-panel__team {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.constraints-panel__stats {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.constraints-panel__purse {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-accent);
+}
+
+.constraints-panel__squad {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.constraints-panel__max {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}

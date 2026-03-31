@@ -1,0 +1,121 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.topbar__phase {
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.phase-idle {
+  background: rgba(139, 149, 168, 0.15);
+  color: var(--text-secondary);
+}
+
+.phase-presented {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-blue);
+}
+
+.phase-open {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--accent-green);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.phase-closed {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber);
+}
+
+.topbar__timer {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.timer-safe { color: var(--timer-safe); }
+.timer-warning { color: var(--timer-warning); }
+.timer-danger { color: var(--timer-danger); animation: pulse 0.5s ease-in-out infinite; }
+.timer-stopped { opacity: 0.5; }
+
+.topbar__teams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar__team {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.topbar__team .mono {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.topbar__squad {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  margin-left: 2px;
+  opacity: 0.7;
+}
+
+.team-disabled {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.topbar__error {
+  font-size: 0.75rem;
+  color: var(--accent-red);
+  background: rgba(239, 68, 68, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  animation: fadeIn var(--transition-fast);
+}
+
+.topbar__connection {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.topbar__connection.connected { background: var(--accent-green); }
+.topbar__connection.disconnected { background: var(--accent-red); }

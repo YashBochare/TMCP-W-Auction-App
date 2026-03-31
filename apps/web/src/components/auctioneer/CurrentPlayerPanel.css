@@ -1,0 +1,102 @@
+.player-panel {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-panel--empty {
+  justify-content: center;
+  min-height: 200px;
+  opacity: 0.6;
+}
+
+.player-panel__avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.player-panel__avatar--placeholder {
+  border: 2px dashed rgba(139, 149, 168, 0.3);
+}
+
+.player-panel__waiting {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.player-panel__name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.player-panel__attrs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.player-panel__attr {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.player-panel__attr strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.player-panel__base {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.player-panel__bid {
+  width: 100%;
+  text-align: center;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  margin-top: 4px;
+  transition: all var(--transition-fast);
+}
+
+.player-panel__bid--active {
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+}
+
+.player-panel__bid-amount {
+  font-size: 1.5rem;
+  color: var(--accent-gold);
+  display: block;
+}
+
+.player-panel__bid-team {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  display: block;
+}
+
+.player-panel__no-bid {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.85rem;
+}
