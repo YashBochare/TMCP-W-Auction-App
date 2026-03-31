@@ -1,15 +1,19 @@
+import { useState } from 'react';
 import { GlobalConfigForm } from '../../components/admin/GlobalConfigForm';
 import { TeamConfigForm } from '../../components/admin/TeamConfigForm';
+import { PlayerUpload } from '../../components/admin/PlayerUpload';
 import { PlayerRosterTable } from '../../components/PlayerRosterTable';
 
 export function EventSetup() {
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>Event Setup</h1>
       <GlobalConfigForm />
       <TeamConfigForm />
-      <PlayerRosterTable />
+      <PlayerUpload onUploadSuccess={() => setRefreshKey(k => k + 1)} />
+      <PlayerRosterTable refreshKey={refreshKey} />
     </div>
   );
 }
