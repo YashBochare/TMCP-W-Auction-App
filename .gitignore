@@ -23,5 +23,6 @@ _bmad-output/
 # Claude
 .claude/
 
-# Prisma generated client (migrations ARE version-controlled)
-apps/api/src/generated/prisma/
+# Prisma generated client
+apps/api/generated/
+apps/api/src/generated/
