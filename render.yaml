@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: tmcp-auction
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build:deploy
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: AUCTIONEER_PASSWORD
+        sync: false
+      - key: JWT_EXPIRY
+        value: 8h
+      - key: NODE_ENV
+        value: production

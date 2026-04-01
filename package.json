@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "concurrently \"npm run dev -w @auction/api\" \"npm run dev -w @auction/web\"",
     "build": "npm run build -w @auction/shared && npm run build -w @auction/api && npm run build -w @auction/web",
+    "build:deploy": "npm run build && npx prisma generate --schema=apps/api/prisma/schema.prisma",
+    "start": "node apps/api/dist/index.js",
     "lint": "npm run lint -w @auction/web && tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },

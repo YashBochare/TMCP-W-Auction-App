@@ -5,7 +5,9 @@ import type { ServerToClientEvents, ClientToServerEvents, ClientRole } from '@au
 export type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 export function createSocket(): TypedSocket {
-  return io(import.meta.env.VITE_API_URL || 'http://localhost:3001', {
+  // In production (same-origin), connect to current host. In dev, use API URL or localhost.
+  const url = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : undefined);
+  return io(url ?? window.location.origin, {
     reconnection: true,
     reconnectionAttempts: 10,
     reconnectionDelay: 1000,

@@ -25,7 +25,7 @@ export function getIo(): TypedServer {
 export function setupSocketServer(httpServer: HttpServer) {
   const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: process.env.FRONTEND_URL || ['http://localhost:5173', 'http://localhost:5174'],
     },
   });
   _io = io;

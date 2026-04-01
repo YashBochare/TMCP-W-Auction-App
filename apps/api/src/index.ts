@@ -9,6 +9,7 @@ config({ path: resolve(__dirname, '../../../.env') });
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { existsSync } from 'fs';
 import { createServer } from 'http';
 import { getPrisma } from './lib/prisma.js';
 import authRoutes from './routes/auth.routes.js';
@@ -24,7 +25,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = setupSocketServer(httpServer);
 
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
 
@@ -43,6 +44,16 @@ app.get('/api/health', async (_req, res) => {
     res.status(503).json({ status: 'error', db: 'disconnected', timestamp: Date.now() });
   }
 });
+
+// Production: serve React frontend from the built web app
+const clientDistPath = resolve(__dirname, '../../web/dist');
+if (existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  // SPA fallback: any non-API route serves index.html so React Router handles it
+  app.get('*', (_req, res) => {
+    res.sendFile(resolve(clientDistPath, 'index.html'));
+  });
+}
 
 httpServer.on('error', (err) => {
   console.error('Server error:', err);
