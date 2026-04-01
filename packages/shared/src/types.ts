@@ -89,41 +89,6 @@ export interface AuctionConfig {
   startingPurse: number;
 }
 
-// Bid Proposal types (Story 3.3)
-
-export interface BidProposal {
-  id: string;
-  teamId: string;
-  teamName: string;
-  bidAmount: number;
-  timestamp: number;
-  status: 'pending' | 'accepted' | 'rejected';
-}
-
-export interface ProposeBidPayload {
-  bidAmount: number;
-}
-
-// Bid Acceptance types (Story 3.4)
-
-export interface AcceptBidPayload {
-  proposalId: string;
-}
-
-export interface BidAcceptedPayload {
-  teamId: string;
-  teamName: string;
-  bidAmount: number;
-  playerName: string;
-}
-
-// Force Accept Bid types (Story 5.3)
-
-export interface ForceAcceptBidPayload {
-  teamId: string;
-  bidAmount: number;
-}
-
 // Player Roster types (Story 2.3)
 
 export interface UpdatePlayerRequest {

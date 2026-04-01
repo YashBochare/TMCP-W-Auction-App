@@ -1,4 +1,4 @@
-import type { Player, TeamBidConstraints, BidProposal, ProposeBidPayload, AcceptBidPayload, BidAcceptedPayload, ForceAcceptBidPayload } from './types.js';
+import type { Player, TeamBidConstraints } from './types.js';
 
 export type ClientRole = 'auctioneer' | 'captain' | 'viewer';
 
@@ -40,12 +40,7 @@ export interface ServerToClientEvents {
   'auction:unsold': (data: { playerName: string }) => void;
   'auction:constraintsUpdated': (data: { constraints: TeamBidConstraints[] }) => void;
   'auction:error': (data: { message: string }) => void;
-  'auction:bidProposed': (data: { proposal: BidProposal }) => void;
-  'auction:bidProposalQueued': (data: { proposals: BidProposal[] }) => void;
-  'captain:bidStatus': (data: { status: 'proposed' | 'rejected' | 'error'; reason?: string; bidAmount: number }) => void;
-  'auction:bidAccepted': (data: BidAcceptedPayload) => void;
-  'captain:outbid': (data: { newHighestBid: number; newLeadingTeam: string }) => void;
-  'captain:highestBidder': (data: { bidAmount: number }) => void;
+  'auction:bidRegistered': (data: { teamId: string; teamName: string; bidAmount: number }) => void;
   'auction:timerTick': (data: { secondsRemaining: number }) => void;
   'auction:timerExpired': () => void;
   'auction:rosterRefreshed': () => void;
@@ -60,11 +55,9 @@ export interface ClientToServerEvents {
   'auction:closeBidding': () => void;
   'auction:sell': (data: SellPayload) => void;
   'auction:markUnsold': () => void;
-  'captain:proposeBid': (data: ProposeBidPayload) => void;
-  'auctioneer:acceptBid': (data: AcceptBidPayload) => void;
+  'auctioneer:registerBid': (data: { teamId: string }) => void;
   'auctioneer:pauseAuction': () => void;
   'auctioneer:resumeAuction': () => void;
   'auctioneer:undoLastAction': () => void;
   'auctioneer:recallUnsold': () => void;
-  'auctioneer:forceAcceptBid': (data: ForceAcceptBidPayload) => void;
 }

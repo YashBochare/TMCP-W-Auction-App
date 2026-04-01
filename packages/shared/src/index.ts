@@ -17,12 +17,9 @@ export type {
   TeamBidConstraints,
   BidValidationResult,
   AuctionConfig,
-  BidProposal,
-  ProposeBidPayload,
-  AcceptBidPayload,
-  BidAcceptedPayload,
 } from './types.js';
 export { calculateMaxBid, canTeamBid, validateBid } from './constraintEngine.js';
+export { getNextBid, getBidIncrement } from './bidIncrement.js';
 export { UserRole } from './auth.js';
 export type { AuthPayload, LoginRequest, LoginResponse } from './auth.js';
 export type {

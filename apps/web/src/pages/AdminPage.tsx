@@ -3,18 +3,17 @@ import { useAuth } from '../context/AuthContext';
 import { useAuctioneerState } from '../hooks/useAuctioneerState';
 import { AuctioneerTopBar } from '../components/auctioneer/AuctioneerTopBar';
 import { CurrentPlayerPanel } from '../components/auctioneer/CurrentPlayerPanel';
-import { BidProposalQueue } from '../components/auctioneer/BidProposalQueue';
 import { AuctionControls } from '../components/auctioneer/AuctionControls';
 import { PlayerQueue } from '../components/auctioneer/PlayerQueue';
 import { TeamConstraintsPanel } from '../components/auctioneer/TeamConstraintsPanel';
-import { ManualBidPanel } from '../components/auctioneer/ManualBidPanel';
+import { TeamBidGrid } from '../components/auctioneer/TeamBidGrid';
 import './AdminPage.css';
 
 export function AdminPage() {
   const { user, logout } = useAuth();
   const state = useAuctioneerState(user?.token);
 
-  // P4: Keyboard shortcuts with debounce guard
+  // Keyboard shortcuts with debounce guard
   const keyLockRef = useRef(false);
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
@@ -66,25 +65,24 @@ export function AdminPage() {
             isProcessing={state.isProcessing}
             actions={state.actions}
           />
-          <ManualBidPanel
-            teams={state.teams}
-            currentHighestBid={state.currentHighestBid}
-            phase={state.phase}
-            isProcessing={state.isProcessing}
-            onForceAcceptBid={state.actions.forceAcceptBid}
-          />
           <TeamConstraintsPanel
             teams={state.teams}
             leadingTeamId={state.phase !== 'idle' ? state.currentHighestBidderTeamId : null}
           />
         </div>
 
-        {/* Center Column: Bid Proposals */}
+        {/* Center Column: Team Bid Buttons */}
         <div className="admin-page__center">
-          <BidProposalQueue
-            proposals={state.proposals}
-            onAccept={state.actions.acceptBid}
+          <TeamBidGrid
+            teams={state.teams}
+            teamColors={state.teamColors}
+            currentHighestBidderTeamId={state.currentHighestBidderTeamId}
+            currentBid={state.currentHighestBid}
+            basePrice={state.currentPlayer?.basePrice ?? 0}
+            phase={state.phase}
+            isPaused={state.isPaused}
             isProcessing={state.isProcessing}
+            onRegisterBid={state.actions.registerBid}
           />
         </div>
 
@@ -101,7 +99,7 @@ export function AdminPage() {
         </div>
       </div>
 
-      {/* Sold/Unsold Overlays — using base hook's single overlay system */}
+      {/* Sold/Unsold Overlays */}
       {state.soldOverlay && (
         <div className="admin-page__overlay admin-page__overlay--sold">
           <div className="admin-page__overlay-content">
@@ -126,12 +124,10 @@ export function AdminPage() {
         </div>
       )}
 
-      {/* Logout (small, top-right corner) */}
       <button className="admin-page__logout" onClick={logout} title="Logout">
         Logout
       </button>
 
-      {/* Min-width warning */}
       <div className="admin-page__mobile-warning">
         Use tablet or desktop for auctioneer dashboard
       </div>

@@ -1,0 +1,107 @@
+.team-bid-grid {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.team-bid-grid__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.team-bid-grid__next-amount {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-green);
+  font-family: var(--font-mono);
+}
+
+.team-bid-grid__buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.team-bid-grid__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  border: 2px solid var(--team-color, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.team-bid-grid__btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--team-color);
+  transform: scale(1.02);
+}
+
+.team-bid-grid__btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.team-bid-grid__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.team-bid-grid__btn--highest {
+  border-color: var(--accent-green);
+  background: rgba(52, 211, 153, 0.1);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.2);
+  opacity: 1 !important;
+}
+
+.team-bid-grid__btn--cant-afford {
+  opacity: 0.3;
+}
+
+.team-bid-grid__team-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.team-bid-grid__purse {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-accent);
+}
+
+.team-bid-grid__badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(52, 211, 153, 0.2);
+  color: var(--accent-green);
+}
+
+.team-bid-grid__badge--warn {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+}
+
+.team-bid-grid__hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}

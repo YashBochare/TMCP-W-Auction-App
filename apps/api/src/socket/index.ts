@@ -5,10 +5,10 @@ import type {
   ClientToServerEvents,
   ClientRole,
 } from '@auction/shared';
-import { addClient, removeClient, getClient, getClientsByRole } from './clientRegistry.js';
+import { getNextBid } from '@auction/shared';
+import { addClient, removeClient, getClient } from './clientRegistry.js';
 import { stateMachine } from '../auction/stateMachine.js';
-import { getAllTeamConstraints, validateTeamBid } from '../auction/constraintService.js';
-import { bidQueue } from '../auction/bidQueue.js';
+import { getAllTeamConstraints, getTeamConstraints } from '../auction/constraintService.js';
 import { auctionTimer } from '../auction/auctionTimer.js';
 import { getTimerState } from '../auction/timerState.js';
 import { getPrisma } from '../lib/prisma.js';
@@ -103,12 +103,10 @@ export function setupSocketServer(httpServer: HttpServer) {
       try {
         const player = await stateMachine.nextPlayer();
         auctionTimer.stop();
-        bidQueue.clearQueue();
         const constraints = await getAllTeamConstraints();
         io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
         io.emit('auction:playerPresented', { player: player as any });
         io.emit('auction:constraintsUpdated', { constraints });
-        io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: [] });
       } catch (err: any) {
         socket.emit('auction:error', { message: err.message });
       }
@@ -141,12 +139,10 @@ export function setupSocketServer(httpServer: HttpServer) {
       try {
         const result = await stateMachine.sell(data.teamId);
         auctionTimer.stop();
-        bidQueue.clearQueue();
         const constraints = await getAllTeamConstraints();
         io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
         io.emit('auction:sold', result);
         io.emit('auction:constraintsUpdated', { constraints });
-        io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: [] });
       } catch (err: any) {
         socket.emit('auction:error', { message: err.message });
       }
@@ -157,10 +153,8 @@ export function setupSocketServer(httpServer: HttpServer) {
       try {
         const result = await stateMachine.markUnsold();
         auctionTimer.stop();
-        bidQueue.clearQueue();
         io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
         io.emit('auction:unsold', result);
-        io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: [] });
       } catch (err: any) {
         socket.emit('auction:error', { message: err.message });
       }
@@ -206,188 +200,36 @@ export function setupSocketServer(httpServer: HttpServer) {
       }
     });
 
-    // === Auctioneer bid acceptance ===
+    // === Register bid (physical bidding model) ===
 
-    socket.on('auctioneer:acceptBid', async (data) => {
+    socket.on('auctioneer:registerBid', async (data) => {
+      if (!isAuctioneer()) { socket.emit('auction:error', { message: 'Only auctioneer can register bids' }); return; }
+      if (stateMachine.phase !== 'bidding_open') { socket.emit('auction:error', { message: 'Bidding is not open' }); return; }
+      if (stateMachine.isPaused) { socket.emit('auction:error', { message: 'Auction is paused' }); return; }
+      if (!stateMachine.currentPlayer) { socket.emit('auction:error', { message: 'No current player' }); return; }
+      if (data.teamId === stateMachine.currentHighestBidderTeamId) { socket.emit('auction:error', { message: 'Team is already the highest bidder' }); return; }
+
       try {
-        if (!isAuctioneer()) {
-          socket.emit('auction:error', { message: 'Only the auctioneer can accept bids' });
-          return;
-        }
+        const nextBid = getNextBid(stateMachine.currentHighestBid, stateMachine.currentPlayer.basePrice);
 
-        const proposal = bidQueue.getProposalById(data.proposalId);
-        if (!proposal) {
-          socket.emit('auction:error', { message: 'Proposal not found or already processed' });
-          return;
-        }
+        // Validate team can afford
+        const teamConstraints = await getTeamConstraints(data.teamId);
+        if (!teamConstraints.canBid) { socket.emit('auction:error', { message: 'Team cannot bid (squad full or no purse)' }); return; }
+        if (nextBid > teamConstraints.maxBid) { socket.emit('auction:error', { message: `Team purse insufficient for bid of ${nextBid}` }); return; }
 
-        const previousHighestBidderTeamId = stateMachine.currentHighestBidderTeamId;
-
-        await stateMachine.acceptBid(proposal.teamId, proposal.bidAmount);
+        await stateMachine.acceptBid(data.teamId, nextBid);
         if (auctionTimer.isRunning()) { auctionTimer.reset(); }
 
-        // Remove accepted proposal, capture and clear lower proposals
-        bidQueue.removeProposal(proposal.id);
-        const toBeClearedProposals = bidQueue.getProposals().filter(p => p.bidAmount <= proposal.bidAmount);
-        const clearedTeamIds = toBeClearedProposals.map(p => p.teamId);
-        bidQueue.clearLowerProposals(proposal.bidAmount);
-
-        // Broadcast to ALL clients
-        const playerName = stateMachine.currentPlayer?.name || 'Unknown';
-        io.emit('auction:bidAccepted', { teamId: proposal.teamId, teamName: proposal.teamName, bidAmount: proposal.bidAmount, playerName });
-        io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
-
-        // Update auctioneer's queue
-        io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: bidQueue.getProposals() });
-
-        // Notify winning captain
-        const allCaptains = getClientsByRole('captain');
-        const winningCaptain = allCaptains.find(c => c.teamId === proposal.teamId);
-        if (winningCaptain) {
-          io.to(winningCaptain.socketId).emit('captain:highestBidder', { bidAmount: proposal.bidAmount });
-        }
-
-        // Notify ALL cleared captains
-        for (const clearedTeamId of clearedTeamIds) {
-          if (clearedTeamId === proposal.teamId) continue;
-          const clearedCaptain = allCaptains.find(c => c.teamId === clearedTeamId);
-          if (clearedCaptain) {
-            io.to(clearedCaptain.socketId).emit('captain:outbid', { newHighestBid: proposal.bidAmount, newLeadingTeam: proposal.teamName });
-          }
-        }
-
-        // Notify previous highest bidder if not already in cleared list
-        if (previousHighestBidderTeamId && previousHighestBidderTeamId !== proposal.teamId && !clearedTeamIds.includes(previousHighestBidderTeamId)) {
-          const outbidCaptain = allCaptains.find(c => c.teamId === previousHighestBidderTeamId);
-          if (outbidCaptain) {
-            io.to(outbidCaptain.socketId).emit('captain:outbid', { newHighestBid: proposal.bidAmount, newLeadingTeam: proposal.teamName });
-          }
-        }
-      } catch (err: any) {
-        console.error('[WS] Bid acceptance error:', err);
-        socket.emit('auction:error', { message: err.message || 'Failed to accept bid' });
-      }
-    });
-
-    // === Auctioneer force accept bid (Story 5.3) ===
-
-    socket.on('auctioneer:forceAcceptBid', async (data) => {
-      try {
-        if (!isAuctioneer()) {
-          socket.emit('auction:error', { message: 'Only the auctioneer can force-accept bids' });
-          return;
-        }
-
-        const phase = stateMachine.phase;
-        if (phase !== 'bidding_open' && phase !== 'bidding_closed') {
-          socket.emit('auction:error', { message: 'Cannot force a bid outside of bidding phases' });
-          return;
-        }
-
-        // Retrieve team name
         const team = await getPrisma().team.findUnique({ where: { id: data.teamId }, select: { name: true } });
-        if (!team) {
-          socket.emit('auction:error', { message: 'Team not found' });
-          return;
-        }
+        const teamName = team?.name || 'Unknown';
 
-        // Validate via constraint engine (bypass the "must exceed current bid" check)
-        const validationResult = await validateTeamBid(data.teamId, data.bidAmount, data.bidAmount - 1);
-        if (!validationResult.valid) {
-          socket.emit('auction:error', { message: validationResult.reason || 'Bid validation failed' });
-          return;
-        }
-
-        const previousHighestBidderTeamId = stateMachine.currentHighestBidderTeamId;
-
-        await stateMachine.acceptBid(data.teamId, data.bidAmount);
-        if (auctionTimer.isRunning()) { auctionTimer.reset(); }
-
-        // Clear lower proposals from the queue
-        bidQueue.clearLowerProposals(data.bidAmount);
-
-        // Broadcast to ALL clients
-        const playerName = stateMachine.currentPlayer?.name || 'Unknown';
-        io.emit('auction:bidAccepted', { teamId: data.teamId, teamName: team.name, bidAmount: data.bidAmount, playerName });
+        io.emit('auction:bidRegistered', { teamId: data.teamId, teamName, bidAmount: nextBid });
         io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
-
-        // Update auctioneer's queue
-        io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: bidQueue.getProposals() });
-
-        // Notify winning captain
-        const allCaptains = getClientsByRole('captain');
-        const winningCaptain = allCaptains.find(c => c.teamId === data.teamId);
-        if (winningCaptain) {
-          io.to(winningCaptain.socketId).emit('captain:highestBidder', { bidAmount: data.bidAmount });
-        }
-
-        // Notify previous highest bidder
-        if (previousHighestBidderTeamId && previousHighestBidderTeamId !== data.teamId) {
-          const outbidCaptain = allCaptains.find(c => c.teamId === previousHighestBidderTeamId);
-          if (outbidCaptain) {
-            io.to(outbidCaptain.socketId).emit('captain:outbid', { newHighestBid: data.bidAmount, newLeadingTeam: team.name });
-          }
-        }
+        const constraints = await getAllTeamConstraints();
+        io.emit('auction:constraintsUpdated', { constraints });
       } catch (err: any) {
-        console.error('[WS] Force accept bid error:', err);
-        socket.emit('auction:error', { message: err.message || 'Failed to force-accept bid' });
-      }
-    });
-
-    // === Captain bid proposal ===
-
-    socket.on('captain:proposeBid', async (data) => {
-      try {
-        const client = getClient(socket.id);
-        if (!client || client.role !== 'captain') {
-          socket.emit('captain:bidStatus', { status: 'rejected', reason: 'Only captains can propose bids', bidAmount: data.bidAmount });
-          return;
-        }
-        if (stateMachine.phase !== 'bidding_open') {
-          socket.emit('captain:bidStatus', { status: 'rejected', reason: 'Bidding is not currently open', bidAmount: data.bidAmount });
-          return;
-        }
-        if (stateMachine.isPaused) {
-          socket.emit('captain:bidStatus', { status: 'rejected', reason: 'Auction is currently paused', bidAmount: data.bidAmount });
-          return;
-        }
-        if (typeof data.bidAmount !== 'number' || !Number.isFinite(data.bidAmount) || data.bidAmount <= 0 || !Number.isInteger(data.bidAmount)) {
-          socket.emit('captain:bidStatus', { status: 'rejected', reason: 'Bid amount must be a positive integer', bidAmount: data.bidAmount });
-          return;
-        }
-        const teamId = client.teamId;
-        if (!teamId) {
-          socket.emit('captain:bidStatus', { status: 'rejected', reason: 'Captain not associated with a team', bidAmount: data.bidAmount });
-          return;
-        }
-
-        // Fetch team name from DB
-        const team = await getPrisma().team.findUnique({ where: { id: teamId }, select: { name: true } });
-        if (!team) {
-          socket.emit('captain:bidStatus', { status: 'rejected', reason: 'Team not found', bidAmount: data.bidAmount });
-          return;
-        }
-
-        // Validate via constraint engine
-        const result = await validateTeamBid(teamId, data.bidAmount, stateMachine.currentHighestBid);
-        if (!result.valid) {
-          socket.emit('captain:bidStatus', { status: 'rejected', reason: result.reason, bidAmount: data.bidAmount });
-          return;
-        }
-
-        // Replace existing proposal from this team
-        bidQueue.removeTeamProposal(teamId);
-        const proposal = bidQueue.addProposal(teamId, team.name, data.bidAmount);
-
-        // Respond to captain
-        socket.emit('captain:bidStatus', { status: 'proposed', bidAmount: data.bidAmount });
-
-        // Broadcast to auctioneer ONLY
-        io.to('room:auctioneer').emit('auction:bidProposed', { proposal });
-        io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: bidQueue.getProposals() });
-      } catch (err) {
-        console.error('[WS] Bid proposal error:', err);
-        socket.emit('captain:bidStatus', { status: 'error', reason: 'Server error processing bid', bidAmount: data.bidAmount });
+        console.error('[WS] Register bid error:', err);
+        socket.emit('auction:error', { message: 'Failed to register bid' });
       }
     });
 
@@ -396,14 +238,10 @@ export function setupSocketServer(httpServer: HttpServer) {
     socket.on('auctioneer:undoLastAction', async () => {
       if (!isAuctioneer()) { socket.emit('auction:error', { message: 'Only auctioneer can undo actions' }); return; }
       try {
-        const { undoneType } = await stateMachine.undo();
-        bidQueue.clearQueue();
+        await stateMachine.undo();
         const constraints = await getAllTeamConstraints();
         io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
-        if (undoneType === 'SOLD' || undoneType === 'UNSOLD') {
-          io.emit('auction:constraintsUpdated', { constraints });
-        }
-        io.to('room:auctioneer').emit('auction:bidProposalQueued', { proposals: bidQueue.getProposals() });
+        io.emit('auction:constraintsUpdated', { constraints });
       } catch (err: any) {
         socket.emit('auction:error', { message: err.message });
       }

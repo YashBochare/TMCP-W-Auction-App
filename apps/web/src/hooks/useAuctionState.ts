@@ -106,8 +106,8 @@ export function useAuctionState(role: 'viewer' | 'captain' | 'auctioneer' = 'vie
       }));
     });
 
-    // Bid accepted
-    socket.on('auction:bidAccepted', (data) => {
+    // Bid registered (physical bidding model)
+    socket.on('auction:bidRegistered', (data) => {
       setState(s => ({
         ...s,
         currentHighestBid: data.bidAmount,

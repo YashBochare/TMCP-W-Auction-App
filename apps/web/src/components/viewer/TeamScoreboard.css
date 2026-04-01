@@ -1,0 +1,84 @@
+.team-scoreboard__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 12px;
+}
+
+.team-scoreboard__card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team-scoreboard__card--leading {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.15);
+}
+
+.team-scoreboard__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.team-scoreboard__name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.team-scoreboard__badge {
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(52, 211, 153, 0.2);
+  color: var(--accent-green);
+}
+
+.team-scoreboard__stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.team-scoreboard__purse {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-accent);
+}
+
+.team-scoreboard__squad {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.team-scoreboard__players {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 8px;
+}
+
+.team-scoreboard__player {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.team-scoreboard__player-price {
+  font-family: var(--font-mono);
+  color: var(--text-accent);
+}
