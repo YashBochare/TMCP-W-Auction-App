@@ -3,8 +3,8 @@ services:
     name: tmcp-auction
     runtime: node
     plan: free
-    buildCommand: npm install --include=dev && npm run build:deploy
-    startCommand: npm start
+    buildCommand: NODE_ENV=development npm install && npm run build:deploy
+    startCommand: NODE_ENV=production npm start
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -16,5 +16,3 @@ services:
         sync: false
       - key: JWT_EXPIRY
         value: 8h
-      - key: NODE_ENV
-        value: production
