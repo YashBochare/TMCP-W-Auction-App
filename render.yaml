@@ -3,7 +3,7 @@ services:
     name: tmcp-auction
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build:deploy
+    buildCommand: npm install --include=dev && npm run build:deploy
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
