@@ -50,7 +50,7 @@ const clientDistPath = resolve(__dirname, '../../web/dist');
 if (existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
   // SPA fallback: any non-API route serves index.html so React Router handles it
-  app.get('*', (_req, res) => {
+  app.get('{*path}', (_req, res) => {
     res.sendFile(resolve(clientDistPath, 'index.html'));
   });
 }
