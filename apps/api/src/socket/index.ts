@@ -116,7 +116,6 @@ export function setupSocketServer(httpServer: HttpServer) {
       if (!isAuctioneer()) { socket.emit('auction:error', { message: 'Only auctioneer can control the auction' }); return; }
       try {
         await stateMachine.openBidding();
-        auctionTimer.start();
         io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
       } catch (err: any) {
         socket.emit('auction:error', { message: err.message });
@@ -218,7 +217,6 @@ export function setupSocketServer(httpServer: HttpServer) {
         if (nextBid > teamConstraints.maxBid) { socket.emit('auction:error', { message: `Team purse insufficient for bid of ${nextBid}` }); return; }
 
         await stateMachine.acceptBid(data.teamId, nextBid);
-        if (auctionTimer.isRunning()) { auctionTimer.reset(); }
 
         const team = await getPrisma().team.findUnique({ where: { id: data.teamId }, select: { name: true } });
         const teamName = team?.name || 'Unknown';

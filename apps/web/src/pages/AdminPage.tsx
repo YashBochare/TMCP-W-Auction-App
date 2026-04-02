@@ -41,8 +41,6 @@ export function AdminPage() {
     <div className="admin-page">
       <AuctioneerTopBar
         phase={state.phase}
-        timerSeconds={state.timerSeconds}
-        timerRunning={state.timerRunning}
         isPaused={state.isPaused}
         connected={state.connected}
         teams={state.teams}

@@ -4,7 +4,6 @@ import { useAuctionState } from '../hooks/useAuctionState';
 import { PhaseIndicator } from '../components/viewer/PhaseIndicator';
 import { CurrentPlayerCard } from '../components/viewer/CurrentPlayerCard';
 import { CurrentBidDisplay } from '../components/viewer/CurrentBidDisplay';
-import { CountdownTimer } from '../components/viewer/CountdownTimer';
 import { TeamScoreboard } from '../components/viewer/TeamScoreboard';
 import { SoldOverlay, UnsoldOverlay } from '../components/viewer/SoldUnsoldOverlay';
 import '../components/viewer/viewer.css';
@@ -77,11 +76,6 @@ export function ViewerPage() {
             bidAmount={state.currentHighestBid}
             teamName={state.currentHighestBidderTeamName}
             phase={state.phase}
-          />
-          <CountdownTimer
-            seconds={state.timerSeconds}
-            running={state.timerRunning}
-            expired={state.timerExpired}
           />
         </div>
       )}

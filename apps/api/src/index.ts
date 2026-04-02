@@ -70,28 +70,8 @@ async function initAuctionState() {
     }
     await stateMachine.loadFromDb();
 
-    // Initialize timer
+    // Timer disabled — auctioneer controls flow manually
     auctionTimer.setIo(io);
-    auctionTimer.setOnExpire(async () => {
-      try {
-        if (stateMachine.phase !== 'bidding_open') return;
-        await stateMachine.closeBidding();
-        if ((stateMachine.phase as string) === 'bidding_closed') {
-          io.emit('auction:stateChanged', stateMachine.getState({
-            timerSeconds: 0,
-            timerRunning: false,
-          }));
-          io.emit('auction:timerExpired');
-        }
-      } catch (error) {
-        console.error('Timer expiry error:', error);
-      }
-    });
-
-    // Crash recovery: resume timer if bidding was open
-    if (stateMachine.phase === 'bidding_open') {
-      auctionTimer.startFrom(stateMachine.timerSeconds);
-    }
 
     console.log(`[Auction] State loaded: phase=${stateMachine.phase}`);
   } catch (err) {

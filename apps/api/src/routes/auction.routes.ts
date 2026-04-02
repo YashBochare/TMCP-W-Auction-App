@@ -40,7 +40,6 @@ router.post('/next-player', async (_req: Request, res: Response) => {
 router.post('/open-bidding', async (_req: Request, res: Response) => {
   try {
     await stateMachine.openBidding();
-    auctionTimer.start();
     getIo().emit('auction:stateChanged', stateMachine.getState(getTimerState()));
     res.json({ success: true, data: stateMachine.getState(getTimerState()) });
   } catch (err: any) {
@@ -174,8 +173,6 @@ router.post('/register-bid', requireAuth, requireRole(UserRole.AUCTIONEER), asyn
     }
 
     await stateMachine.acceptBid(teamId, nextBid);
-    if (auctionTimer.isRunning()) { auctionTimer.reset(); }
-
     const team = await getPrisma().team.findUnique({ where: { id: teamId }, select: { name: true } });
     const teamName = team?.name || 'Unknown';
 

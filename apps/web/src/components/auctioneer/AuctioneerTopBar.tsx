@@ -3,8 +3,6 @@ import './AuctioneerTopBar.css';
 
 interface AuctioneerTopBarProps {
   phase: AuctionPhase;
-  timerSeconds: number;
-  timerRunning: boolean;
   isPaused: boolean;
   connected: boolean;
   teams: TeamBidConstraints[];
@@ -30,21 +28,13 @@ function formatPurse(amount: number): string {
   return String(amount);
 }
 
-export function AuctioneerTopBar({ phase, timerSeconds, timerRunning, isPaused, connected, teams, actionError }: AuctioneerTopBarProps) {
-  const timerClass = timerSeconds > 10 ? 'timer-safe' : timerSeconds > 5 ? 'timer-warning' : 'timer-danger';
-  const showTimer = phase === 'bidding_open' || (phase === 'bidding_closed' && timerSeconds > 0);
-
+export function AuctioneerTopBar({ phase, isPaused, connected, teams, actionError }: AuctioneerTopBarProps) {
   return (
     <div className="topbar">
       <div className="topbar__left">
         <span className={`topbar__phase ${PHASE_CLASSES[phase]}`}>
           {isPaused ? 'PAUSED' : PHASE_LABELS[phase]}
         </span>
-        {showTimer && (
-          <span className={`topbar__timer ${timerClass} ${timerRunning ? '' : 'timer-stopped'}`}>
-            {timerSeconds}s
-          </span>
-        )}
       </div>
 
       <div className="topbar__teams">
