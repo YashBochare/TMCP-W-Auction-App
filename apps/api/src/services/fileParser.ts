@@ -6,26 +6,38 @@ import { parse } from 'csv-parse/sync';
  * Maps common variants to canonical field names.
  */
 function normalizeHeader(header: string): string | null {
-  const normalized = header.toLowerCase().replace(/\s+/g, '');
+  const h = header.toLowerCase().trim();
 
-  const headerMap: Record<string, string> = {
-    name: 'name',
-    playername: 'name',
-    club: 'club',
-    experience: 'experience',
-    education: 'education',
-    contests: 'contests',
-    message: 'message',
-    photo: 'photoUrl',
-    photourl: 'photoUrl',
-    baseprice: 'basePrice',
-    price: 'basePrice',
+  // Exact matches first (highest priority)
+  const exactMap: Record<string, string> = {
+    'name': 'name',
+    'club': 'club',
+    'experience': 'experience',
+    'education': 'education',
+    'contests': 'contests',
+    'message': 'message',
+    'photo': 'photoUrl',
+    'photourl': 'photoUrl',
+    'baseprice': 'basePrice',
+    'price': 'basePrice',
   };
+  const stripped = h.replace(/\s+/g, '');
+  if (exactMap[stripped]) return exactMap[stripped];
 
-  return headerMap[normalized] ?? null;
+  // Keyword matching for Google Form-style long questions
+  // Order matters — most specific first to avoid collisions
+  if (h.includes('photo') || h.includes('picture') || h.includes('image')) return 'photoUrl';
+  if (h.includes('price') || h.includes('base price')) return 'basePrice';
+  if (h.includes('contest')) return 'contests';
+  if (h.includes('educat') || h.includes('level') || h.includes('pathway')) return 'education';
+  if (h.includes('experi') || h.includes('how long') || h.includes('years')) return 'experience';
+  if (h.includes('message') || h.includes('tagline') || h.includes('pitch') || h.includes('why')) return 'message';
+  if (h.includes('club')) return 'club';
+  if (h.includes('name') || h.includes('participant')) return 'name';
+
+  return null;
 }
 
-// Only name is strictly required — everything else can be blank
 const REQUIRED_FIELDS = ['name'];
 
 export function validateHeaders(headers: (string | null)[]): string[] {
