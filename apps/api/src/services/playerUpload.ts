@@ -11,6 +11,8 @@ interface ValidateResult {
   errors: UploadValidationError[];
 }
 
+const DEFAULT_BASE_PRICE = 3000;
+
 export function validatePlayerRow(
   row: Record<string, unknown>,
   rowIndex: number,
@@ -19,63 +21,31 @@ export function validatePlayerRow(
 
   const name = String(row.name ?? '').trim();
   if (!name) {
-    errors.push({
-      row: rowIndex,
-      field: 'name',
-      message: 'Name is required',
-      value: String(row.name ?? ''),
-    });
+    errors.push({ row: rowIndex, field: 'name', message: 'Name is required', value: String(row.name ?? '') });
   }
 
-  const role = String(row.role ?? '').trim();
-  if (!role) {
-    errors.push({
-      row: rowIndex,
-      field: 'role',
-      message: 'Role is required',
-      value: String(row.role ?? ''),
-    });
-  }
+  const club = String(row.club ?? '').trim();
+  const experience = String(row.experience ?? '').trim();
+  const education = String(row.education ?? '').trim();
+  const contests = String(row.contests ?? '').trim();
+  const message = String(row.message ?? '').trim();
+  const photoUrl = String(row.photoUrl ?? row.photo ?? '').trim() || undefined;
 
-  const clubLevel = String(row.clubLevel ?? '').trim();
-  if (!clubLevel) {
-    errors.push({
-      row: rowIndex,
-      field: 'clubLevel',
-      message: 'Club Level is required',
-      value: String(row.clubLevel ?? ''),
-    });
-  }
-
-  const speakingSkill = String(row.speakingSkill ?? '').trim();
-  if (!speakingSkill) {
-    errors.push({
-      row: rowIndex,
-      field: 'speakingSkill',
-      message: 'Speaking Skill is required',
-      value: String(row.speakingSkill ?? ''),
-    });
-  }
-
-  const funTitle = String(row.funTitle ?? '').trim();
-  if (!funTitle) {
-    errors.push({
-      row: rowIndex,
-      field: 'funTitle',
-      message: 'Fun Title is required',
-      value: String(row.funTitle ?? ''),
-    });
-  }
-
+  // basePrice is optional — defaults to 3000
   const rawBasePrice = row.basePrice;
-  const basePrice = Number(rawBasePrice);
-  if (isNaN(basePrice) || !Number.isInteger(basePrice) || basePrice <= 0) {
-    errors.push({
-      row: rowIndex,
-      field: 'basePrice',
-      message: 'Base Price must be a valid positive number',
-      value: String(rawBasePrice ?? ''),
-    });
+  let basePrice = DEFAULT_BASE_PRICE;
+  if (rawBasePrice !== undefined && rawBasePrice !== null && rawBasePrice !== '') {
+    const parsed = Number(rawBasePrice);
+    if (isNaN(parsed) || !Number.isInteger(parsed) || parsed <= 0) {
+      errors.push({
+        row: rowIndex,
+        field: 'basePrice',
+        message: 'Base Price must be a valid positive number',
+        value: String(rawBasePrice),
+      });
+    } else {
+      basePrice = parsed;
+    }
   }
 
   if (errors.length > 0) {
@@ -83,7 +53,7 @@ export function validatePlayerRow(
   }
 
   return {
-    valid: { name, role, clubLevel, speakingSkill, funTitle, basePrice },
+    valid: { name, club, experience, education, contests, message, photoUrl, basePrice },
     errors: [],
   };
 }
@@ -105,13 +75,7 @@ export async function processPlayerUpload(
     return {
       success: false,
       playersCreated: 0,
-      errors: [
-        {
-          row: 0,
-          field: 'file',
-          message: `Unsupported file type: ${mimeType}`,
-        },
-      ],
+      errors: [{ row: 0, field: 'file', message: `Unsupported file type: ${mimeType}` }],
     };
   }
 
@@ -119,9 +83,7 @@ export async function processPlayerUpload(
     return {
       success: false,
       playersCreated: 0,
-      errors: [
-        { row: 0, field: 'file', message: 'File contains no data rows' },
-      ],
+      errors: [{ row: 0, field: 'file', message: 'File contains no data rows' }],
     };
   }
 
@@ -129,7 +91,7 @@ export async function processPlayerUpload(
   const validRows: PlayerUploadRow[] = [];
 
   for (let i = 0; i < rows.length; i++) {
-    const { valid, errors } = validatePlayerRow(rows[i], i + 2); // +2: row 1 is header, data starts at row 2
+    const { valid, errors } = validatePlayerRow(rows[i], i + 2);
     if (valid) {
       validRows.push(valid);
     }
@@ -142,19 +104,19 @@ export async function processPlayerUpload(
 
   const prisma = getPrisma();
 
-  // Atomic: delete existing PENDING players and insert new ones in a single transaction
   await prisma.$transaction(async (tx) => {
     await tx.player.deleteMany({ where: { status: 'PENDING' } });
     await tx.player.createMany({
       data: validRows.map((row) => ({
         name: row.name,
-        role: row.role,
-        clubLevel: row.clubLevel,
-        speakingSkill: row.speakingSkill,
-        funTitle: row.funTitle,
+        club: row.club,
+        experience: row.experience,
+        education: row.education,
+        contests: row.contests,
+        message: row.message,
+        photoUrl: row.photoUrl ?? null,
         basePrice: row.basePrice,
         status: 'PENDING' as const,
-        photoUrl: null,
       })),
     });
   });

@@ -28,10 +28,11 @@ export function CurrentPlayerPanel({ player, currentHighestBid, currentHighestBi
       )}
       <h2 className="player-panel__name">{player.name}</h2>
       <div className="player-panel__attrs">
-        <span className="player-panel__attr"><strong>Role:</strong> {player.role}</span>
-        <span className="player-panel__attr"><strong>Club:</strong> {player.clubLevel}</span>
-        <span className="player-panel__attr"><strong>Speaking:</strong> {player.speakingSkill}</span>
-        <span className="player-panel__attr"><strong>Title:</strong> {player.funTitle}</span>
+        <span className="player-panel__attr"><strong>Club:</strong> {player.club}</span>
+        <span className="player-panel__attr"><strong>Experience:</strong> {player.experience}</span>
+        <span className="player-panel__attr"><strong>Education:</strong> {player.education}</span>
+        <span className="player-panel__attr"><strong>Contests:</strong> {player.contests}</span>
+        {player.message && <span className="player-panel__attr"><strong>Message:</strong> {player.message}</span>}
       </div>
       <div className="player-panel__base">
         Base: <span className="price">{player.basePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}</span>

@@ -95,7 +95,7 @@ export function PlayerQueue({ players, currentPlayerId, phase, isProcessing, onN
             >
               <div className="player-queue__info">
                 <span className="player-queue__name">{player.name}</span>
-                <span className="player-queue__role">{player.role}</span>
+                <span className="player-queue__role">{player.club}</span>
               </div>
               <span className="player-queue__price price">
                 {player.status === 'SOLD' && player.soldPrice

@@ -19,10 +19,11 @@ export interface Player {
   id: string;
   name: string;
   photoUrl?: string;
-  role: string;
-  clubLevel: string;
-  speakingSkill: string;
-  funTitle: string;
+  club: string;
+  experience: string;
+  education: string;
+  contests: string;
+  message: string;
   basePrice: number;
   status: PlayerStatus;
   soldPrice?: number;
@@ -47,10 +48,12 @@ export interface AuctionState {
 
 export interface PlayerUploadRow {
   name: string;
-  role: string;
-  clubLevel: string;
-  speakingSkill: string;
-  funTitle: string;
+  club: string;
+  experience: string;
+  education: string;
+  contests: string;
+  message: string;
+  photoUrl?: string;
   basePrice: number;
 }
 
@@ -93,9 +96,11 @@ export interface AuctionConfig {
 
 export interface UpdatePlayerRequest {
   name?: string;
-  role?: string;
-  clubLevel?: string;
-  speakingSkill?: string;
-  funTitle?: string;
+  club?: string;
+  experience?: string;
+  education?: string;
+  contests?: string;
+  message?: string;
+  photoUrl?: string;
   basePrice?: number;
 }

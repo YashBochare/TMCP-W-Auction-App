@@ -11,10 +11,13 @@ function normalizeHeader(header: string): string | null {
   const headerMap: Record<string, string> = {
     name: 'name',
     playername: 'name',
-    role: 'role',
-    clublevel: 'clubLevel',
-    speakingskill: 'speakingSkill',
-    funtitle: 'funTitle',
+    club: 'club',
+    experience: 'experience',
+    education: 'education',
+    contests: 'contests',
+    message: 'message',
+    photo: 'photoUrl',
+    photourl: 'photoUrl',
     baseprice: 'basePrice',
     price: 'basePrice',
   };
@@ -22,7 +25,8 @@ function normalizeHeader(header: string): string | null {
   return headerMap[normalized] ?? null;
 }
 
-const REQUIRED_FIELDS = ['name', 'role', 'clubLevel', 'speakingSkill', 'funTitle', 'basePrice'];
+// Only name is strictly required — everything else can be blank
+const REQUIRED_FIELDS = ['name'];
 
 export function validateHeaders(headers: (string | null)[]): string[] {
   const found = new Set(headers.filter((h): h is string => h !== null));

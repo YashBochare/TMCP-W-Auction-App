@@ -86,7 +86,7 @@ router.get('/', async (_req: Request, res: Response) => {
 // PUT /api/players/:id — update player details
 router.put('/:id', async (req: Request, res: Response) => {
   const id = req.params.id as string;
-  const { name, role, clubLevel, speakingSkill, funTitle, basePrice } = req.body;
+  const { name, club, experience, education, contests, message, photoUrl, basePrice } = req.body;
 
   // Check player exists
   const existing = await getPrisma().player.findUnique({ where: { id } });
@@ -127,10 +127,12 @@ router.put('/:id', async (req: Request, res: Response) => {
     where: { id },
     data: {
       ...(name && { name: name.trim() }),
-      ...(role && { role }),
-      ...(clubLevel && { clubLevel }),
-      ...(speakingSkill && { speakingSkill }),
-      ...(funTitle && { funTitle }),
+      ...(club !== undefined && { club }),
+      ...(experience !== undefined && { experience }),
+      ...(education !== undefined && { education }),
+      ...(contests !== undefined && { contests }),
+      ...(message !== undefined && { message }),
+      ...(photoUrl !== undefined && { photoUrl }),
       ...(basePrice && { basePrice }),
     },
   });

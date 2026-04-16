@@ -5,10 +5,11 @@ import type { Player } from '@auction/shared';
 interface EditState {
   id: string;
   name: string;
-  role: string;
-  clubLevel: string;
-  speakingSkill: string;
-  funTitle: string;
+  club: string;
+  experience: string;
+  education: string;
+  contests: string;
+  message: string;
   basePrice: number;
 }
 
@@ -40,10 +41,11 @@ export function PlayerRosterTable({ refreshKey }: { refreshKey?: number }) {
     setEditing({
       id: p.id,
       name: p.name,
-      role: p.role,
-      clubLevel: p.clubLevel,
-      speakingSkill: p.speakingSkill,
-      funTitle: p.funTitle,
+      club: p.club,
+      experience: p.experience,
+      education: p.education,
+      contests: p.contests,
+      message: p.message,
       basePrice: p.basePrice,
     });
     setEditError(null);
@@ -57,10 +59,11 @@ export function PlayerRosterTable({ refreshKey }: { refreshKey?: number }) {
       method: 'PUT',
       body: JSON.stringify({
         name: editing.name,
-        role: editing.role,
-        clubLevel: editing.clubLevel,
-        speakingSkill: editing.speakingSkill,
-        funTitle: editing.funTitle,
+        club: editing.club,
+        experience: editing.experience,
+        education: editing.education,
+        contests: editing.contests,
+        message: editing.message,
         basePrice: editing.basePrice,
       }),
     });
@@ -118,10 +121,11 @@ export function PlayerRosterTable({ refreshKey }: { refreshKey?: number }) {
           <strong>Editing: {editing.name}</strong>
           <div style={s.editRow}>
             <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} style={s.input} placeholder="Name" />
-            <input value={editing.role} onChange={(e) => setEditing({ ...editing, role: e.target.value })} style={s.input} placeholder="Role" />
-            <input value={editing.clubLevel} onChange={(e) => setEditing({ ...editing, clubLevel: e.target.value })} style={s.input} placeholder="Club Level" />
-            <input value={editing.speakingSkill} onChange={(e) => setEditing({ ...editing, speakingSkill: e.target.value })} style={s.input} placeholder="Speaking" />
-            <input value={editing.funTitle} onChange={(e) => setEditing({ ...editing, funTitle: e.target.value })} style={s.input} placeholder="Fun Title" />
+            <input value={editing.club} onChange={(e) => setEditing({ ...editing, club: e.target.value })} style={s.input} placeholder="Club" />
+            <input value={editing.experience} onChange={(e) => setEditing({ ...editing, experience: e.target.value })} style={s.input} placeholder="Experience" />
+            <input value={editing.education} onChange={(e) => setEditing({ ...editing, education: e.target.value })} style={s.input} placeholder="Education" />
+            <input value={editing.contests} onChange={(e) => setEditing({ ...editing, contests: e.target.value })} style={s.input} placeholder="Contests" />
+            <input value={editing.message} onChange={(e) => setEditing({ ...editing, message: e.target.value })} style={s.input} placeholder="Message" />
             <input type="number" value={editing.basePrice} onChange={(e) => setEditing({ ...editing, basePrice: Number(e.target.value) })} style={{ ...s.input, width: '100px' }} />
           </div>
           {editError && <p style={{ color: '#f87171', margin: '0.25rem 0 0', fontSize: '0.8rem' }}>{editError}</p>}
@@ -138,10 +142,11 @@ export function PlayerRosterTable({ refreshKey }: { refreshKey?: number }) {
             <tr>
               <th style={s.th}>#</th>
               <th style={s.th}>Name</th>
-              <th style={s.th}>Role</th>
-              <th style={s.th}>Club Level</th>
-              <th style={s.th}>Speaking</th>
-              <th style={s.th}>Fun Title</th>
+              <th style={s.th}>Club</th>
+              <th style={s.th}>Experience</th>
+              <th style={s.th}>Education</th>
+              <th style={s.th}>Contests</th>
+              <th style={s.th}>Message</th>
               <th style={{ ...s.th, textAlign: 'right' }}>Base Price</th>
               <th style={s.th}>Status</th>
               <th style={s.th}>Actions</th>
@@ -152,10 +157,11 @@ export function PlayerRosterTable({ refreshKey }: { refreshKey?: number }) {
               <tr key={p.id} style={i % 2 === 0 ? s.rowEven : s.rowOdd}>
                 <td style={s.td}>{i + 1}</td>
                 <td style={s.td}>{p.name}</td>
-                <td style={s.td}>{p.role}</td>
-                <td style={s.td}>{p.clubLevel}</td>
-                <td style={s.td}>{p.speakingSkill}</td>
-                <td style={s.td}>{p.funTitle}</td>
+                <td style={s.td}>{p.club}</td>
+                <td style={s.td}>{p.experience}</td>
+                <td style={s.td}>{p.education}</td>
+                <td style={s.td}>{p.contests}</td>
+                <td style={s.td}>{p.message}</td>
                 <td style={{ ...s.td, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(p.basePrice)}</td>
                 <td style={s.td}>
                   <span style={{ color: p.status === 'SOLD' ? '#4ade80' : p.status === 'UNSOLD' ? '#f87171' : '#94a3b8' }}>{p.status}</span>

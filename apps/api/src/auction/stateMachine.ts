@@ -37,10 +37,11 @@ interface PlayerRecord {
   id: string;
   name: string;
   photoUrl: string | null;
-  role: string;
-  clubLevel: string;
-  speakingSkill: string;
-  funTitle: string;
+  club: string;
+  experience: string;
+  education: string;
+  contests: string;
+  message: string;
   basePrice: number;
   status: string;
   soldPrice: number | null;
