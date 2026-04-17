@@ -1,16 +1,12 @@
 /* === Viewer Page Layout === */
 .viewer-page {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  grid-template-rows: auto 1fr;
-  height: 100vh;
-  gap: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   background: var(--bg-primary);
-  overflow: hidden;
 }
 
 .viewer-page__header {
-  grid-column: 1 / -1;
   padding: 0.75rem 1.5rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--bg-elevated);
@@ -25,8 +21,7 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  gap: 1.5rem;
-  overflow: hidden;
+  gap: 1.75rem;
 }
 
 .viewer-page__sidebar {
@@ -47,34 +42,34 @@
 .player-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
-  padding: 2rem;
+  padding: 2.5rem;
   text-align: center;
   box-shadow: var(--shadow-card);
   animation: slideUp var(--transition-slow) ease-out;
   width: 100%;
-  max-width: 500px;
+  max-width: 900px;
 }
 
 .player-card--empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
+  min-height: 300px;
 }
 
 .player-card__placeholder {
   color: var(--text-secondary);
-  font-size: 1.25rem;
+  font-size: 1.75rem;
 }
 
 .player-card__photo {
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 1rem;
+  width: clamp(240px, 22vw, 320px);
+  height: clamp(240px, 22vw, 320px);
+  margin: 0 auto 1.5rem;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid var(--accent-gold);
-  box-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
+  border: 5px solid var(--accent-gold);
+  box-shadow: 0 0 40px rgba(201, 168, 76, 0.35);
 }
 
 .player-card__photo img {
@@ -91,31 +86,31 @@
   justify-content: center;
   background: var(--bg-elevated);
   color: var(--accent-gold);
-  font-size: 3rem;
+  font-size: 6rem;
   font-weight: 700;
 }
 
 .player-card__name {
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-size: clamp(2.25rem, 4.5vw, 3.75rem);
   font-weight: 700;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   color: var(--text-primary);
 }
 
 .player-card__attrs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.75rem;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .chip {
-  padding: 0.25rem 0.75rem;
+  padding: 0.5rem 1.25rem;
   border-radius: var(--radius-sm);
   background: var(--bg-elevated);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   font-weight: 500;
 }
 
@@ -124,13 +119,23 @@
   color: var(--accent-gold);
 }
 
+.player-card__message {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  font-style: italic;
+  margin: 0.75rem auto 1.25rem;
+  max-width: 700px;
+  line-height: 1.4;
+}
+
 .player-card__base-price {
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: 1.3rem;
 }
 
 .player-card__base-price .price {
   color: var(--text-accent);
+  font-weight: 700;
 }
 
 /* === Bid Display === */
