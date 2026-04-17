@@ -49,7 +49,7 @@ export function PlayerUpload({ onUploadSuccess }: { onUploadSuccess?: () => void
   return (
     <div style={s.card}>
       <h2 style={s.heading}>Upload Players</h2>
-      <p style={s.muted}>Upload an Excel (.xlsx) file with columns: Name, Role, Club Level, Speaking Skill, Fun Title, Base Price</p>
+      <p style={s.muted}>Upload an Excel (.xlsx) file with columns: Name, Club, Experience, Education, Contests (or Achievements), Message, Photo. Only Name is required; basePrice defaults to 3000.</p>
 
       <div style={s.row}>
         <input
