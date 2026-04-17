@@ -17,6 +17,7 @@ interface AuctionControlsProps {
     pause: () => void;
     resume: () => void;
     undoLastAction: () => void;
+    resetAuction: () => void;
   };
 }
 
@@ -82,6 +83,14 @@ export function AuctionControls({ phase, currentHighestBid, isPaused, hasUndoHis
           disabled={isProcessing}
         />
       )}
+
+      <ConfirmButton
+        className="control-btn reset"
+        onConfirm={actions.resetAuction}
+        label="Reset Auction"
+        confirmLabel="Confirm Reset?"
+        disabled={isProcessing}
+      />
     </div>
   );
 }

@@ -217,6 +217,14 @@ export function useAuctioneerState(token?: string) {
       withProcessing(() => socket.emit('auctioneer:undoLastAction'));
     }, [base.socket, withProcessing]),
 
+    resetAuction: useCallback(() => {
+      if (!token) return;
+      fetch('/api/auction/reset', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }, [token]),
+
     refreshPlayers: useCallback(() => {
       if (!token) return;
       fetch('/api/players', { headers: { Authorization: `Bearer ${token}` } })

@@ -135,6 +135,31 @@ router.post('/recall-unsold', requireAuth, requireRole(UserRole.AUCTIONEER), asy
   }
 });
 
+// Reset auction to idle (clears current player, bids, pause state). Does NOT touch players or teams.
+router.post('/reset', requireAuth, requireRole(UserRole.AUCTIONEER), async (_req: Request, res: Response) => {
+  try {
+    await getPrisma().auctionState.updateMany({
+      data: {
+        currentPlayerId: null,
+        currentHighestBid: 0,
+        currentHighestBidderId: null,
+        biddingStatus: 'IDLE',
+        isPaused: false,
+      },
+    });
+    await stateMachine.loadFromDb();
+    auctionTimer.stop();
+    const io = getIo();
+    const constraints = await getAllTeamConstraints();
+    io.emit('auction:stateChanged', stateMachine.getState(getTimerState()));
+    io.emit('auction:constraintsUpdated', { constraints });
+    res.json({ success: true, data: stateMachine.getState(getTimerState()) });
+  } catch (err: any) {
+    console.error('Reset auction error:', err);
+    res.status(500).json({ success: false, error: { message: 'Failed to reset auction' } });
+  }
+});
+
 // Register bid (physical bidding model)
 router.post('/register-bid', requireAuth, requireRole(UserRole.AUCTIONEER), async (req: Request, res: Response) => {
   const { teamId } = req.body;
