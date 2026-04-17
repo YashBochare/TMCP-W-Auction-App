@@ -94,8 +94,17 @@ export async function parseXlsx(
     row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
       const header = headers[colNumber - 1];
       if (header) {
-        obj[header] = cell.value;
-        if (cell.value !== null && cell.value !== undefined && String(cell.value).trim() !== '') {
+        // Unwrap ExcelJS rich cell values (hyperlinks, rich text, etc.)
+        let val: unknown = cell.value;
+        if (val && typeof val === 'object') {
+          const v = val as { hyperlink?: string; text?: string; result?: unknown; richText?: Array<{ text: string }> };
+          if (v.hyperlink) val = v.hyperlink;
+          else if (v.text) val = v.text;
+          else if (v.richText) val = v.richText.map(r => r.text).join('');
+          else if (v.result !== undefined) val = v.result;
+        }
+        obj[header] = val;
+        if (val !== null && val !== undefined && String(val).trim() !== '') {
           hasData = true;
         }
       }
