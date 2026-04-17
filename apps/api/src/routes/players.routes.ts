@@ -63,6 +63,11 @@ router.post('/upload', (req, res, next) => {
     }
 
     const result = await processPlayerUpload(req.file.buffer, mimeType);
+    if (result.success) {
+      // Reload in-memory state machine so it sees the reset DB state
+      const { stateMachine } = await import('../auction/stateMachine.js');
+      await stateMachine.loadFromDb();
+    }
     const status = result.success ? 200 : 400;
     res.status(status).json(result);
   } catch (err) {

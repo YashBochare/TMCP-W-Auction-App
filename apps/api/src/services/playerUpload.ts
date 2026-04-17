@@ -118,6 +118,16 @@ export async function processPlayerUpload(
   const prisma = getPrisma();
 
   await prisma.$transaction(async (tx) => {
+    // Reset auction state so server doesn't think it's mid-auction from a previous session
+    await tx.auctionState.updateMany({
+      data: {
+        currentPlayerId: null,
+        currentHighestBid: 0,
+        currentHighestBidderId: null,
+        biddingStatus: 'IDLE',
+        isPaused: false,
+      },
+    });
     await tx.player.deleteMany({ where: { status: 'PENDING' } });
     await tx.player.createMany({
       data: validRows.map((row) => ({
