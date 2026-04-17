@@ -13,13 +13,14 @@ interface ValidateResult {
 
 const DEFAULT_BASE_PRICE = 3000;
 
-/** Convert Google Drive share links to direct-view URLs that work in <img> tags. */
+/** Convert Google Drive share links to direct CDN URLs that work in <img> tags. */
 function normalizeDriveUrl(url: string): string {
   if (!url) return url;
   // Matches: https://drive.google.com/open?id=FILE_ID, /file/d/FILE_ID/view, ?id=FILE_ID
   const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/) || url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (idMatch) {
-    return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w400`;
+    // lh3.googleusercontent.com serves the image directly (no redirect) — works reliably in <img>
+    return `https://lh3.googleusercontent.com/d/${idMatch[1]}=w400`;
   }
   return url;
 }
