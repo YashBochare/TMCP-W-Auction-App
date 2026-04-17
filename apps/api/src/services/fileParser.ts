@@ -28,7 +28,7 @@ function normalizeHeader(header: string): string | null {
   // Order matters — most specific first to avoid collisions
   if (h.includes('photo') || h.includes('picture') || h.includes('image')) return 'photoUrl';
   if (h.includes('price') || h.includes('base price')) return 'basePrice';
-  if (h.includes('contest')) return 'contests';
+  if (h.includes('contest') || h.includes('achievement') || h.includes('award')) return 'contests';
   if (h.includes('educat') || h.includes('level') || h.includes('pathway')) return 'education';
   if (h.includes('experi') || h.includes('how long') || h.includes('years')) return 'experience';
   if (h.includes('message') || h.includes('tagline') || h.includes('pitch') || h.includes('why')) return 'message';
