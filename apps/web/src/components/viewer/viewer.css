@@ -395,3 +395,88 @@
 
 .phase--closed { color: var(--accent-amber); }
 .phase--closed .phase-indicator__dot { background: var(--accent-amber); }
+
+/* === Mobile === */
+@media (max-width: 640px) {
+  .viewer-page__main {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .player-card {
+    padding: 1.25rem;
+    max-width: 100%;
+  }
+
+  .player-card__photo {
+    width: clamp(140px, 45vw, 200px);
+    height: clamp(140px, 45vw, 200px);
+    border-width: 3px;
+    margin-bottom: 1rem;
+  }
+
+  .player-card__name {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .player-card__attrs {
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .chip {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .player-card__message {
+    font-size: 0.95rem;
+    margin: 0.5rem auto 0.75rem;
+  }
+
+  .player-card__base-price {
+    font-size: 1rem;
+  }
+
+  .bid-display__amount {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+
+  .bid-display__team {
+    font-size: 0.95rem;
+  }
+
+  .overlay__title {
+    font-size: clamp(2.5rem, 12vw, 4rem);
+  }
+
+  .overlay__player {
+    font-size: 1.1rem;
+  }
+
+  .overlay__price {
+    font-size: 1.75rem;
+  }
+
+  .team-scoreboard__grid {
+    grid-template-columns: 1fr;
+    padding: 8px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+  .player-card {
+    max-width: 100%;
+    padding: 1.75rem;
+  }
+
+  .player-card__photo {
+    width: clamp(180px, 30vw, 240px);
+    height: clamp(180px, 30vw, 240px);
+  }
+
+  .team-scoreboard__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
