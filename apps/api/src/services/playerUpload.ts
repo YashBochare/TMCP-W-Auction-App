@@ -117,8 +117,13 @@ export async function processPlayerUpload(
 
   const prisma = getPrisma();
 
+  // Treat every upload as a full reset: wipe all players, restore team purses,
+  // clear auction state. This avoids lingering SOLD records from a previous session.
+  const eventConfig = await prisma.eventConfig.findFirst();
+  const startingPurse = eventConfig?.startingPurse ?? 100000;
+
   await prisma.$transaction(async (tx) => {
-    // Reset auction state so server doesn't think it's mid-auction from a previous session
+    // Reset auction state so server doesn't think it's mid-auction
     await tx.auctionState.updateMany({
       data: {
         currentPlayerId: null,
@@ -128,7 +133,10 @@ export async function processPlayerUpload(
         isPaused: false,
       },
     });
-    await tx.player.deleteMany({ where: { status: 'PENDING' } });
+    // Delete ALL players (not just PENDING) to clear stale SOLD/UNSOLD records
+    await tx.player.deleteMany({});
+    // Restore every team's purse to the starting amount
+    await tx.team.updateMany({ data: { purse: startingPurse } });
     await tx.player.createMany({
       data: validRows.map((row) => ({
         name: row.name,
