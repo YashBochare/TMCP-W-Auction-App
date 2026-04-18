@@ -1,10 +1,9 @@
 .admin-page {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
   position: relative;
-  overflow: hidden;
 }
 
 .admin-page__grid {
@@ -12,34 +11,20 @@
   grid-template-columns: 1fr 1.2fr 1fr;
   gap: 16px;
   padding: 16px;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  padding-bottom: 4rem;
+  align-items: start;
 }
 
-.admin-page__left {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow: hidden;
-}
-
-.admin-page__center {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow: hidden;
-}
-
+.admin-page__left,
+.admin-page__center,
 .admin-page__right {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: 12px;
 }
 
 .admin-page__right > .player-queue {
-  flex: 1;
-  min-height: 0;
+  max-height: calc(100vh - 120px);
 }
 
 /* Logout button */

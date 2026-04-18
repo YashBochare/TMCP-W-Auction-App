@@ -63,14 +63,9 @@ export function AdminPage() {
             isProcessing={state.isProcessing}
             actions={state.actions}
           />
-          <TeamConstraintsPanel
-            teams={state.teams}
-            leadingTeamId={state.phase !== 'idle' ? state.currentHighestBidderTeamId : null}
-            players={state.players}
-          />
         </div>
 
-        {/* Center Column: Team Bid Buttons */}
+        {/* Center Column: Team Bid Buttons + Team Roster */}
         <div className="admin-page__center">
           <TeamBidGrid
             teams={state.teams}
@@ -82,6 +77,11 @@ export function AdminPage() {
             isPaused={state.isPaused}
             isProcessing={state.isProcessing}
             onRegisterBid={state.actions.registerBid}
+          />
+          <TeamConstraintsPanel
+            teams={state.teams}
+            leadingTeamId={state.phase !== 'idle' ? state.currentHighestBidderTeamId : null}
+            players={state.players}
           />
         </div>
 
