@@ -2,6 +2,8 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { getPrisma } from '../lib/prisma.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
+import { getIo } from '../socket/index.js';
+import { getAllTeamConstraints } from '../auction/constraintService.js';
 
 const DEFAULTS = { startingPurse: 100000, maxSquadSize: 7, minBasePrice: 3000 } as const;
 
@@ -57,6 +59,14 @@ router.post('/', async (req: Request, res: Response) => {
     const config = existing
       ? await getPrisma().eventConfig.update({ where: { id: existing.id }, data })
       : await getPrisma().eventConfig.create({ data });
+
+    // Broadcast refreshed constraints so admin and viewer clients see new maxBid/canBid
+    try {
+      const constraints = await getAllTeamConstraints();
+      getIo().emit('auction:constraintsUpdated', { constraints });
+    } catch (broadcastErr) {
+      console.error('Constraints broadcast failed:', broadcastErr);
+    }
 
     res.json({ success: true, data: config });
   } catch (err) {
