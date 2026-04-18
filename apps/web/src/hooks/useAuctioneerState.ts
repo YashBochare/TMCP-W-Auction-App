@@ -48,29 +48,7 @@ export function useAuctioneerState(token?: string) {
       }, 3000);
     };
 
-    const handleSold = () => {
-      const playerId = currentPlayerIdRef.current;
-      setExtras(s => ({
-        ...s,
-        isProcessing: false,
-        players: playerId
-          ? s.players.map(p => p.id === playerId ? { ...p, status: 'SOLD' as const } : p)
-          : s.players,
-      }));
-    };
-
-    const handleUnsold = () => {
-      const playerId = currentPlayerIdRef.current;
-      setExtras(s => ({
-        ...s,
-        isProcessing: false,
-        players: playerId
-          ? s.players.map(p => p.id === playerId ? { ...p, status: 'UNSOLD' as const } : p)
-          : s.players,
-      }));
-    };
-
-    const handleRosterRefreshed = () => {
+    const refetchPlayers = () => {
       if (!token) return;
       fetch('/api/players', { headers: { Authorization: `Bearer ${token}` } })
         .then(res => res.ok ? res.json() : null)
@@ -85,6 +63,18 @@ export function useAuctioneerState(token?: string) {
           }
         });
     };
+
+    const handleSold = () => {
+      setExtras(s => ({ ...s, isProcessing: false }));
+      refetchPlayers();
+    };
+
+    const handleUnsold = () => {
+      setExtras(s => ({ ...s, isProcessing: false }));
+      refetchPlayers();
+    };
+
+    const handleRosterRefreshed = refetchPlayers;
 
     socket.on('auction:error', handleError);
     socket.on('auction:sold', handleSold);
