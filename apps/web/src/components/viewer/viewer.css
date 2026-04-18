@@ -4,6 +4,7 @@
   flex-direction: column;
   min-height: 100vh;
   background: var(--bg-primary);
+  padding-bottom: 4rem;
 }
 
 .viewer-page__header {
