@@ -19,13 +19,47 @@
 
 .constraints-panel__row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 10px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
   background: var(--bg-elevated);
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
   font-size: 0.8rem;
+}
+
+.constraints-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.constraints-panel__players {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 6px;
+}
+
+.constraints-panel__player {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.constraints-panel__player-name {
+  color: var(--text-primary);
+}
+
+.constraints-panel__player-price {
+  font-family: var(--font-mono);
+  color: var(--text-accent);
 }
 
 .constraints-panel__row--leading {

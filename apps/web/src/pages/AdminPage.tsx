@@ -66,6 +66,7 @@ export function AdminPage() {
           <TeamConstraintsPanel
             teams={state.teams}
             leadingTeamId={state.phase !== 'idle' ? state.currentHighestBidderTeamId : null}
+            players={state.players}
           />
         </div>
 
